@@ -1,4 +1,5 @@
 import './bootstrap';
+import './vin-scanner';
 
 import Alpine from 'alpinejs';
 
