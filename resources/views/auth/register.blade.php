@@ -2,10 +2,17 @@
     <form method="POST" action="{{ route('register') }}">
         @csrf
 
-        <!-- Name -->
+        <!-- Shop Name -->
         <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+            <x-input-label for="shop_name" :value="__('Shop Name')" />
+            <x-text-input id="shop_name" class="block mt-1 w-full" type="text" name="shop_name" :value="old('shop_name')" required autofocus autocomplete="organization" placeholder="Go Pro Auto Hail Repair" />
+            <x-input-error :messages="$errors->get('shop_name')" class="mt-2" />
+        </div>
+
+        <!-- Your Name -->
+        <div class="mt-4">
+            <x-input-label for="name" :value="__('Your Name')" />
+            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autocomplete="name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
