@@ -356,6 +356,9 @@
                 </div>
             </div>
 
+            {{-- Team --}}
+            <livewire:work-orders.work-order-team :work-order="$workOrder" />
+
             {{-- Insurance details (if applicable) --}}
             @if($workOrder->job_type->isInsurance())
                 <div class="rounded-xl border border-slate-200 bg-white shadow-sm">

@@ -16,7 +16,7 @@ class User extends Authenticatable
     protected $fillable = [
         'tenant_id', 'name', 'email', 'phone', 'password',
         'active', 'commission_rate', 'sales_manager_override_rate',
-        'subject_to_manager_override',
+        'per_car_bonus', 'subject_to_manager_override',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -30,6 +30,7 @@ class User extends Authenticatable
             'subject_to_manager_override'  => 'boolean',
             'commission_rate'              => 'decimal:2',
             'sales_manager_override_rate'  => 'decimal:2',
+            'per_car_bonus'               => 'decimal:2',
         ];
     }
 

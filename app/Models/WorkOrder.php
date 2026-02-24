@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\WorkOrderJobType;
 use App\Enums\WorkOrderStatus;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\Role;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -115,6 +116,17 @@ class WorkOrder extends Model
     public function events(): HasMany
     {
         return $this->hasMany(WorkOrderEvent::class)->orderByDesc('created_at');
+    }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(WorkOrderAssignment::class)->with('user');
+    }
+
+    /** Assignments for a specific role */
+    public function assignmentsForRole(Role $role): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->assignments->where('role', $role);
     }
 
     // ── Status helpers ─────────────────────────────────────────────────────────

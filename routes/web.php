@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\WorkOrderController;
 use Illuminate\Support\Facades\Route;
@@ -17,7 +18,12 @@ Route::middleware(['auth'])->group(function () {
 
     // Work Orders
     Route::resource('work-orders', WorkOrderController::class)
-        ->only(['index', 'create', 'show']);
+        ->only(['index', 'create', 'show', 'edit']);
+
+    // Staff (uses {staff} param to avoid collision with User model binding)
+    Route::resource('staff', StaffController::class)
+        ->only(['index', 'create', 'show', 'edit', 'destroy'])
+        ->parameters(['staff' => 'staff']);
 
     // Customers
     Route::resource('customers', CustomerController::class)

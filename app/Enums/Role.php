@@ -34,6 +34,40 @@ enum Role: string
         };
     }
 
+    /** Whether this role uses a split % on work order assignments */
+    public function usesSplitPct(): bool
+    {
+        return match($this) {
+            self::PDR_TECH, self::SALES_ADVISOR => true,
+            default => false,
+        };
+    }
+
+    /** Roles that can be assigned to a work order */
+    public static function assignable(): array
+    {
+        return [
+            self::SALES_ADVISOR,
+            self::PDR_TECH,
+            self::RI_TECH,
+            self::PORTER,
+        ];
+    }
+
+    /** Badge color classes for role chips */
+    public function badgeClasses(): string
+    {
+        return match($this) {
+            self::OWNER         => 'bg-purple-100 text-purple-700',
+            self::PDR_TECH      => 'bg-blue-100 text-blue-700',
+            self::SALES_ADVISOR => 'bg-emerald-100 text-emerald-700',
+            self::SALES_MANAGER => 'bg-amber-100 text-amber-700',
+            self::RI_TECH       => 'bg-orange-100 text-orange-700',
+            self::PORTER        => 'bg-slate-100 text-slate-600',
+            self::BOOKKEEPER    => 'bg-pink-100 text-pink-700',
+        };
+    }
+
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

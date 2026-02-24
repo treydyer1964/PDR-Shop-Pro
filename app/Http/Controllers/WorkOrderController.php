@@ -16,6 +16,12 @@ class WorkOrderController extends Controller
         return view('work-orders.create');
     }
 
+    public function edit(WorkOrder $workOrder)
+    {
+        abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
+        return view('work-orders.edit', compact('workOrder'));
+    }
+
     public function show(WorkOrder $workOrder)
     {
         abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
@@ -26,6 +32,7 @@ class WorkOrderController extends Controller
             'insuranceCompany',
             'statusLogs.user',
             'events.user',
+            'assignments.user',
         ]);
 
         return view('work-orders.show', compact('workOrder'));
