@@ -77,5 +77,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $advisor->roles()->syncWithoutDetaching(['sales_advisor']);
+
+        // Insurance companies
+        $this->call(InsuranceCompanySeeder::class);
     }
 }

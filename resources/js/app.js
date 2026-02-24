@@ -1,8 +1,2 @@
 import './bootstrap';
 import './vin-scanner';
-
-import Alpine from 'alpinejs';
-
-window.Alpine = Alpine;
-
-Alpine.start();

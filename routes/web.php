@@ -3,6 +3,7 @@
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\WorkOrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -13,6 +14,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
+
+    // Work Orders
+    Route::resource('work-orders', WorkOrderController::class)
+        ->only(['index', 'create', 'show']);
 
     // Customers
     Route::resource('customers', CustomerController::class)
