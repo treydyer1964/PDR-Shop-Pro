@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppointmentType;
+use App\Models\ExpenseCategory;
 use App\Models\Tenant;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -35,6 +37,9 @@ class RegisteredUserController extends Controller
                 'password' => $request->password, // Tenant::createWithOwner passes to users()->create() which hashes via cast
             ]
         );
+
+        ExpenseCategory::seedForTenant($tenant->id);
+        AppointmentType::seedForTenant($tenant->id);
 
         $user = $tenant->users()->where('email', $request->email)->first();
 

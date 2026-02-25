@@ -185,6 +185,9 @@
         {{-- Left col (2/3) --}}
         <div class="space-y-6 lg:col-span-2">
 
+            {{-- Photos --}}
+            <livewire:work-orders.work-order-photos :work-order="$workOrder" />
+
             {{-- Sub-Tasks card --}}
             <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-5 py-3">
@@ -260,6 +263,18 @@
 
                 </div>
             </div>
+
+            {{-- Expenses & Net --}}
+            <livewire:work-orders.work-order-expenses :work-order="$workOrder" />
+
+            {{-- Rental Vehicle --}}
+            <livewire:work-orders.work-order-rentals :work-order="$workOrder" />
+
+            {{-- Commissions --}}
+            <livewire:work-orders.work-order-commissions :work-order="$workOrder" />
+
+            {{-- Payments --}}
+            <livewire:work-orders.work-order-payments :work-order="$workOrder" />
 
             {{-- Events / Timeline --}}
             <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -411,6 +426,9 @@
                     </dl>
                 </div>
             @endif
+
+            {{-- Appointments --}}
+            <livewire:work-orders.work-order-appointments :work-order="$workOrder" />
 
             {{-- Notes --}}
             @if($workOrder->notes)

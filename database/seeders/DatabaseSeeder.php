@@ -80,5 +80,8 @@ class DatabaseSeeder extends Seeder
 
         // Insurance companies
         $this->call(InsuranceCompanySeeder::class);
+
+        // Standard expense categories
+        $this->call(ExpenseCategorySeeder::class);
     }
 }

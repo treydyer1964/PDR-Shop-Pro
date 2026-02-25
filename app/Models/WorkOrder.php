@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentSource;
 use App\Enums\WorkOrderJobType;
 use App\Enums\WorkOrderStatus;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,11 @@ class WorkOrder extends Model
         'job_type',
         'status',
         'invoice_total',
+        'invoice_date',
+        'commissions_locked_at',
+        'is_closed',
+        'closed_at',
+        'closed_by',
         'notes',
         // Insurance
         'insurance_company_id',
@@ -59,6 +65,10 @@ class WorkOrder extends Model
         'job_type'                    => WorkOrderJobType::class,
         'status'                      => WorkOrderStatus::class,
         'invoice_total'               => 'decimal:2',
+        'invoice_date'                => 'date',
+        'commissions_locked_at'       => 'datetime',
+        'is_closed'                   => 'boolean',
+        'closed_at'                   => 'datetime',
         'deductible'                  => 'decimal:2',
         'insurance_pre_inspected'     => 'boolean',
         'has_rental_coverage'         => 'boolean',
@@ -121,6 +131,135 @@ class WorkOrder extends Model
     public function assignments(): HasMany
     {
         return $this->hasMany(WorkOrderAssignment::class)->with('user');
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(WorkOrderExpense::class)->with('category')->orderBy('id');
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(WorkOrderCommission::class)->with('user')->orderBy('id');
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(WorkOrderPhoto::class)->orderBy('category')->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class)->orderBy('scheduled_at');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(WorkOrderPayment::class)->orderBy('received_on')->orderBy('id');
+    }
+
+    public function commissionsLocked(): bool
+    {
+        return $this->commissions_locked_at !== null;
+    }
+
+    public function lockCommissions(): void
+    {
+        $this->update(['commissions_locked_at' => now()]);
+        $this->events()->create([
+            'tenant_id'   => $this->tenant_id,
+            'user_id'     => auth()->id(),
+            'type'        => 'commissions_locked',
+            'description' => 'Commissions locked and ready for pay run.',
+        ]);
+    }
+
+    public function unlockCommissions(): void
+    {
+        $this->update(['commissions_locked_at' => null]);
+        $this->events()->create([
+            'tenant_id'   => $this->tenant_id,
+            'user_id'     => auth()->id(),
+            'type'        => 'commissions_unlocked',
+            'description' => 'Commissions unlocked for recalculation.',
+        ]);
+    }
+
+    // ── Financial helpers ──────────────────────────────────────────────────────
+
+    public function totalExpenses(): float
+    {
+        return (float) $this->expenses->sum('amount');
+    }
+
+    public function netTotal(): ?float
+    {
+        if ($this->invoice_total === null) {
+            return null;
+        }
+
+        return (float) $this->invoice_total - $this->totalExpenses();
+    }
+
+    public function totalPaidInsurance(): float
+    {
+        return (float) $this->payments->where('source', PaymentSource::Insurance)->sum('amount');
+    }
+
+    public function totalPaidCustomer(): float
+    {
+        return (float) $this->payments->where('source', PaymentSource::Customer)->sum('amount');
+    }
+
+    public function totalPaid(): float
+    {
+        return (float) $this->payments->sum('amount');
+    }
+
+    public function balanceOwed(): ?float
+    {
+        if ($this->invoice_total === null) {
+            return null;
+        }
+
+        return (float) $this->invoice_total - $this->totalPaid();
+    }
+
+    public function isClosed(): bool
+    {
+        return (bool) $this->is_closed;
+    }
+
+    public function close(): void
+    {
+        $this->update([
+            'is_closed' => true,
+            'closed_at' => now(),
+            'closed_by' => auth()->id(),
+        ]);
+
+        $this->events()->create([
+            'tenant_id'   => $this->tenant_id,
+            'user_id'     => auth()->id(),
+            'type'        => 'work_order_closed',
+            'description' => 'Work order closed.',
+        ]);
+    }
+
+    public function reopen(): void
+    {
+        $this->update([
+            'is_closed' => false,
+            'closed_at' => null,
+            'closed_by' => null,
+        ]);
+
+        $this->events()->create([
+            'tenant_id'   => $this->tenant_id,
+            'user_id'     => auth()->id(),
+            'type'        => 'work_order_reopened',
+            'description' => 'Work order reopened.',
+        ]);
     }
 
     /** Assignments for a specific role */
