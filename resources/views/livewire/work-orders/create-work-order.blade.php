@@ -165,8 +165,7 @@
                 @if($creatingNewVehicle)
                     {{-- New vehicle form --}}
                     <div class="space-y-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4"
-                         x-data="{
-                            scanning: false,
+                         x-data="Object.assign(vinScanner(), {
                             decoding: false,
                             async decodeVin(vin) {
                                 if (vin.length !== 17) return;
@@ -185,15 +184,62 @@
                                     this.decoding = false;
                                 }
                             }
-                         }">
+                         })"
+                         @vin-scanned.window="$wire.set('vVin', $event.detail.vin); decodeVin($event.detail.vin)">
                         <p class="text-sm font-medium text-slate-700">New Vehicle</p>
 
                         {{-- VIN --}}
                         <div>
                             <label class="block text-xs font-medium text-slate-600">VIN</label>
-                            <div class="mt-1 flex gap-2">
+
+                            {{-- Hidden photo capture input (fallback for non-HTTPS / iOS) --}}
+                            <input x-ref="photoInput" type="file" accept="image/*" capture="environment"
+                                   class="hidden" @change="scanFromPhoto($event)" />
+
+                            {{-- Scan button (shown when not live-scanning) --}}
+                            <div x-show="!scanning" class="mt-1 mb-2">
+                                <button @click="startScan()" type="button"
+                                        :disabled="photoScanning"
+                                        class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60">
+                                    <template x-if="photoScanning">
+                                        <svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                    </template>
+                                    <template x-if="!photoScanning">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                                        </svg>
+                                    </template>
+                                    <span x-text="photoScanning ? 'Reading barcode…' : 'Scan VIN Barcode'"></span>
+                                </button>
+                            </div>
+
+                            {{-- Camera preview (shown while scanning) --}}
+                            <div x-show="scanning" x-cloak class="mt-1 mb-2 relative overflow-hidden rounded-lg border border-slate-300 bg-black">
+                                <video x-ref="videoEl" class="w-full" autoplay muted playsinline></video>
+                                {{-- Red targeting line --}}
+                                <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                                    <div class="h-0.5 w-4/5 bg-red-400 opacity-80 shadow-lg"></div>
+                                </div>
+                                <p class="absolute top-2 left-0 right-0 text-center text-xs font-medium text-white drop-shadow">
+                                    Point at VIN barcode — windshield or door jamb
+                                </p>
+                                <button @click="stopScan()" type="button"
+                                        class="absolute bottom-2 right-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white">
+                                    Cancel
+                                </button>
+                            </div>
+
+                            {{-- Camera error --}}
+                            <p x-show="error" x-cloak x-text="error" class="mb-2 text-xs text-red-600"></p>
+
+                            {{-- Manual VIN input (always visible as fallback) --}}
+                            <div class="flex gap-2">
                                 <input wire:model.blur="vVin" x-on:change="decodeVin($event.target.value)"
-                                       type="text" maxlength="17" placeholder="17-character VIN"
+                                       type="text" maxlength="17" placeholder="Or type VIN manually…"
                                        class="flex-1 rounded-lg border-slate-300 font-mono text-sm shadow-sm uppercase focus:border-blue-500 focus:ring-blue-500" />
                                 <span x-show="decoding" class="flex items-center px-2 text-xs text-slate-500">
                                     <svg class="h-4 w-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24">

@@ -25,6 +25,9 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
 
+    // VIN extraction via OpenAI Vision
+    Route::post('/vin/extract', [VehicleController::class, 'extractVin'])->name('vin.extract');
+
     // Work Orders
     Route::resource('work-orders', WorkOrderController::class)
         ->only(['index', 'create', 'show', 'edit']);

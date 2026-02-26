@@ -76,6 +76,46 @@ class VinService
     }
 
     /**
+     * Apply EXIF orientation to an image so it is upright before sending to OpenAI.
+     * iOS stores photos with raw sensor rotation; EXIF tag says how to display it.
+     * GPT-4o-mini ignores EXIF, so we bake the rotation into the pixel data.
+     */
+    private function normalizeOrientation(string $base64Image): string
+    {
+        $binary = base64_decode($base64Image);
+
+        // Read EXIF orientation from the raw binary
+        $exif = @exif_read_data('data://image/jpeg;base64,' . $base64Image);
+        $orientation = $exif['Orientation'] ?? 1;
+
+        if ($orientation === 1) {
+            return $base64Image; // Already upright
+        }
+
+        $image = @imagecreatefromstring($binary);
+        if (!$image) {
+            return $base64Image; // Can't decode — send as-is
+        }
+
+        switch ($orientation) {
+            case 2: imageflip($image, IMG_FLIP_HORIZONTAL); break;
+            case 3: $image = imagerotate($image, 180, 0); break;
+            case 4: imageflip($image, IMG_FLIP_VERTICAL); break;
+            case 5: $image = imagerotate($image, -90, 0); imageflip($image, IMG_FLIP_HORIZONTAL); break;
+            case 6: $image = imagerotate($image, -90, 0); break;  // Rotated 90° CW (most common on iOS)
+            case 7: $image = imagerotate($image,  90, 0); imageflip($image, IMG_FLIP_HORIZONTAL); break;
+            case 8: $image = imagerotate($image,  90, 0); break;  // Rotated 90° CCW
+        }
+
+        ob_start();
+        imagejpeg($image, null, 90);
+        $rotated = ob_get_clean();
+        imagedestroy($image);
+
+        return base64_encode($rotated);
+    }
+
+    /**
      * Extract a VIN from an image using OpenAI Vision (GPT-4o-mini).
      * Returns the 17-char VIN string, or null.
      */
@@ -93,22 +133,23 @@ class VinService
                 ->timeout(20)
                 ->post('https://api.openai.com/v1/chat/completions', [
                     'model' => 'gpt-4o-mini',
-                    'max_tokens' => 50,
+                    'max_tokens' => 100,
                     'messages' => [[
                         'role' => 'user',
                         'content' => [
                             [
                                 'type' => 'image_url',
                                 'image_url' => [
-                                    'url'    => "data:{$mimeType};base64,{$base64Image}",
+                                    'url'    => "data:image/jpeg;base64,{$base64Image}",
                                     'detail' => 'high',
                                 ],
                             ],
                             [
                                 'type' => 'text',
-                                'text' => 'Extract the Vehicle Identification Number (VIN) from this image. '
-                                    . 'A VIN is exactly 17 alphanumeric characters (no I, O, or Q). '
-                                    . 'Respond with ONLY the 17-character VIN. '
+                                'text' => 'Find the Vehicle Identification Number (VIN) in this image. '
+                                    . 'A VIN is exactly 17 characters using only letters (A-Z except I, O, Q) and digits (0-9). '
+                                    . 'Look for it on door jamb stickers (labeled "VIN:"), window stickers, dashboard, or barcodes on stickers. '
+                                    . 'Respond with ONLY the 17-character VIN in uppercase. '
                                     . 'If you cannot find a VIN, respond with exactly: NONE',
                             ],
                         ],
@@ -121,10 +162,17 @@ class VinService
 
             $text = trim($response->json('choices.0.message.content', ''));
 
-            // Extract 17-char VIN from response
+            Log::info('OpenAI VIN response', [
+                'status'   => $response->status(),
+                'response' => $text,
+                'image_kb' => round(strlen($base64Image) * 3 / 4 / 1024),
+            ]);
+
+            // Extract 17-char VIN from response.
+            // Skip check-digit validation for OCR results — a single misread character
+            // would fail the check digit even if the rest is correct.
             if (preg_match('/[A-HJ-NPR-Z0-9]{17}/i', $text, $matches)) {
-                $candidate = strtoupper($matches[0]);
-                return $this->isValidVin($candidate) ? $candidate : null;
+                return strtoupper($matches[0]);
             }
 
             return null;
