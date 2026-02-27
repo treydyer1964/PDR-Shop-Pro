@@ -219,16 +219,18 @@
                         {{-- Date or edit input --}}
                         @if($log)
                             @if($editingLogId === $log->id)
-                                <div class="flex items-center gap-1" x-data="{ d: '{{ $editLogDate }}' }">
-                                    <input x-model="d" type="date"
-                                           class="rounded border-slate-300 text-xs py-0.5 focus:border-blue-500 focus:ring-blue-500" />
+                                <div wire:key="log-edit-{{ $log->id }}" class="flex items-center gap-2"
+                                     x-data="{ d: @js($editLogDate) }">
+                                    <input type="date"
+                                           x-init="$el.value = d"
+                                           @change="d = $event.target.value"
+                                           @input="d = $event.target.value"
+                                           class="rounded border-slate-300 text-xs py-1 focus:border-blue-500 focus:ring-blue-500" />
                                     <button @click="$wire.saveLogDate(d)"
-                                            class="text-xs font-medium text-blue-600 hover:text-blue-700">Save</button>
-                                    <button wire:click="cancelEditLogDate"
-                                            class="text-xs text-slate-400">✕</button>
+                                            class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 active:bg-blue-800 transition-colors">Save</button>
                                 </div>
                             @else
-                                <div class="flex items-center gap-1.5 shrink-0">
+                                <div wire:key="log-display-{{ $log->id }}" class="flex items-center gap-1.5 shrink-0">
                                     <span class="text-xs text-slate-400">{{ $log->entered_at->format('M j, Y') }}</span>
                                     <button wire:click="startEditLogDate({{ $log->id }})"
                                             class="text-slate-300 hover:text-blue-500 transition-colors" title="Edit date">
