@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Enums\Role;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class WorkOrder extends Model
 {
@@ -156,6 +157,11 @@ class WorkOrder extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(WorkOrderPayment::class)->orderBy('received_on')->orderBy('id');
+    }
+
+    public function workOrderRental(): HasOne
+    {
+        return $this->hasOne(WorkOrderRental::class);
     }
 
     public function commissionsLocked(): bool

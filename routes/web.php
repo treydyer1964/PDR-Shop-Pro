@@ -31,6 +31,8 @@ Route::middleware(['auth'])->group(function () {
     // Work Orders
     Route::resource('work-orders', WorkOrderController::class)
         ->only(['index', 'create', 'show', 'edit']);
+    Route::get('/work-orders/{workOrder}/invoice/pdf', [WorkOrderController::class, 'invoicePdf'])->name('work-orders.invoice-pdf');
+    Route::get('/work-orders/{workOrder}/rental-invoice/pdf', [WorkOrderController::class, 'rentalInvoicePdf'])->name('work-orders.rental-invoice-pdf');
 
     // Staff (uses {staff} param to avoid collision with User model binding)
     Route::resource('staff', StaffController::class)

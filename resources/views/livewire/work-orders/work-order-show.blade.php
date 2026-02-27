@@ -749,6 +749,18 @@
             {!! $chevron !!}
         </button>
         <div x-show="open" style="display:none" class="border-t border-slate-100">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-0">
+                <a href="{{ route('work-orders.invoice-pdf', $workOrder) }}" target="_blank"
+                   class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                    ↓ Print Invoice
+                </a>
+                @if($this->rentalSummary && $this->rentalSummary->has_insurance_coverage && $this->rentalSummary->insurance_daily_rate)
+                <a href="{{ route('work-orders.rental-invoice-pdf', $workOrder) }}" target="_blank"
+                   class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                    ↓ Print Rental Invoice
+                </a>
+                @endif
+            </div>
             <livewire:work-orders.work-order-payments :work-order="$workOrder" />
         </div>
     </div>
