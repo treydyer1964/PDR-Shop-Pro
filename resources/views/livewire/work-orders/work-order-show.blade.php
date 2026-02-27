@@ -164,7 +164,7 @@
             {{-- Advance status controls --}}
             @if(!$workOrder->kicked && !$workOrder->on_hold && $this->nextStatus)
                 <div class="flex items-center gap-2">
-                    <input wire:model="transitionDate" type="date"
+                    <input wire:model.live="transitionDate" type="date"
                            class="rounded-lg border-slate-300 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 flex-1 min-w-0" />
                     <button wire:click="advanceStatus" wire:loading.attr="disabled"
                             class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors whitespace-nowrap">
@@ -220,7 +220,7 @@
                         @if($log)
                             @if($editingLogId === $log->id)
                                 <div class="flex items-center gap-1">
-                                    <input wire:model="editLogDate" type="date"
+                                    <input wire:model.live="editLogDate" type="date"
                                            class="rounded border-slate-300 text-xs py-0.5 focus:border-blue-500 focus:ring-blue-500" />
                                     <button wire:click="saveLogDate"
                                             class="text-xs font-medium text-blue-600 hover:text-blue-700">Save</button>
@@ -306,7 +306,7 @@
                 </span>
                 @if($editingSubTask === 'teardown_completed_at')
                     <div class="flex items-center gap-1">
-                        <input wire:model="subTaskDate" type="date"
+                        <input wire:model.live="subTaskDate" type="date"
                                class="rounded border-slate-300 text-xs py-0.5 focus:border-blue-500 focus:ring-blue-500" />
                         <button wire:click="updateSubTaskDate('teardown_completed_at')"
                                 class="text-xs text-blue-600 font-medium">Set</button>
