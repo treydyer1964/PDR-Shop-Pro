@@ -290,8 +290,9 @@ class WorkOrderShow extends Component
         $this->editLogDate  = $log->entered_at->toDateString();
     }
 
-    public function saveLogDate(): void
+    public function saveLogDate(string $date): void
     {
+        $this->editLogDate = $date;
         $this->validate(['editLogDate' => 'required|date']);
 
         $log = WorkOrderStatusLog::findOrFail($this->editingLogId);

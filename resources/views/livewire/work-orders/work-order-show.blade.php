@@ -219,10 +219,10 @@
                         {{-- Date or edit input --}}
                         @if($log)
                             @if($editingLogId === $log->id)
-                                <div class="flex items-center gap-1">
-                                    <input wire:model="editLogDate" type="date"
+                                <div class="flex items-center gap-1" x-data="{ d: '{{ $editLogDate }}' }">
+                                    <input x-model="d" type="date"
                                            class="rounded border-slate-300 text-xs py-0.5 focus:border-blue-500 focus:ring-blue-500" />
-                                    <button wire:click="saveLogDate"
+                                    <button @click="$wire.saveLogDate(d)"
                                             class="text-xs font-medium text-blue-600 hover:text-blue-700">Save</button>
                                     <button wire:click="cancelEditLogDate"
                                             class="text-xs text-slate-400">✕</button>
@@ -435,6 +435,20 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                         </svg>
                         Maps
+                    </a>
+                </div>
+            @endif
+
+            {{-- No contact info fallback --}}
+            @if(!$workOrder->customer->phone && !$workOrder->customer->email && !$fullAddress)
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs text-slate-400 italic">No contact info on file.</p>
+                    <a href="{{ route('customers.edit', $workOrder->customer) }}" wire:navigate
+                       class="flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                        </svg>
+                        Add Info
                     </a>
                 </div>
             @endif
