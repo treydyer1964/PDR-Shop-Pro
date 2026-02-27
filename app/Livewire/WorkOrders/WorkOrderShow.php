@@ -147,6 +147,7 @@ class WorkOrderShow extends Component
 
         unset($this->nextStatus);
         unset($this->events);
+        unset($this->statusLogs);
     }
 
     public function jumpToStatus(string $statusValue): void

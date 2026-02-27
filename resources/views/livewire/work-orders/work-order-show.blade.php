@@ -219,14 +219,12 @@
                         {{-- Date or edit input --}}
                         @if($log)
                             @if($editingLogId === $log->id)
-                                <div wire:key="log-edit-{{ $log->id }}" class="flex items-center gap-2"
-                                     x-data="{ d: @js($editLogDate) }">
+                                <div wire:key="log-edit-{{ $log->id }}" class="flex items-center gap-2">
                                     <input type="date"
-                                           x-init="$el.value = d"
-                                           @change="d = $event.target.value"
-                                           @input="d = $event.target.value"
+                                           id="ld{{ $log->id }}"
+                                           value="{{ $editLogDate }}"
                                            class="rounded border-slate-300 text-xs py-1 focus:border-blue-500 focus:ring-blue-500" />
-                                    <button @click="$wire.saveLogDate(d)"
+                                    <button @click="$wire.saveLogDate(document.getElementById('ld{{ $log->id }}').value)"
                                             class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 active:bg-blue-800 transition-colors">Save</button>
                                 </div>
                             @else
