@@ -220,7 +220,7 @@
                         @if($log)
                             @if($editingLogId === $log->id)
                                 <div class="flex items-center gap-1">
-                                    <input wire:model.live="editLogDate" type="date"
+                                    <input wire:model="editLogDate" type="date"
                                            class="rounded border-slate-300 text-xs py-0.5 focus:border-blue-500 focus:ring-blue-500" />
                                     <button wire:click="saveLogDate"
                                             class="text-xs font-medium text-blue-600 hover:text-blue-700">Save</button>
@@ -438,18 +438,6 @@
                     </a>
                 </div>
             @endif
-
-            {{-- Vehicle --}}
-            <div>
-                <p class="text-xs text-slate-400 mb-0.5">Vehicle</p>
-                <p class="text-sm font-medium text-slate-800">
-                    {{ $workOrder->vehicle->year }} {{ $workOrder->vehicle->make }} {{ $workOrder->vehicle->model }}
-                    @if($workOrder->vehicle->color) · {{ $workOrder->vehicle->color }} @endif
-                </p>
-                @if($workOrder->vehicle->vin)
-                    <p class="font-mono text-xs text-slate-400 mt-0.5">{{ $workOrder->vehicle->vin }}</p>
-                @endif
-            </div>
 
             <a href="{{ route('customers.show', $workOrder->customer) }}" wire:navigate
                class="inline-flex text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline">

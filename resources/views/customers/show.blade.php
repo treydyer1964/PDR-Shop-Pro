@@ -14,6 +14,7 @@
 
         {{-- Contact info card --}}
         <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+            @if($customer->phone || $customer->email || $customer->city || $customer->state)
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 @if($customer->phone)
                 <div>
@@ -34,6 +35,9 @@
                 </div>
                 @endif
             </div>
+            @else
+            <p class="text-sm text-slate-400 italic">No contact information on file.</p>
+            @endif
             @if($customer->notes)
             <div class="mt-3 border-t border-slate-100 pt-3">
                 <p class="text-xs text-slate-500">Notes</p>
@@ -56,8 +60,7 @@
             </div>
 
             @forelse($customer->vehicles as $vehicle)
-                <a href="{{ route('customers.vehicles.edit', [$customer, $vehicle]) }}"
-                   class="mb-2 flex items-start justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-200 hover:ring-blue-400 transition-all">
+                <div class="mb-2 flex items-start justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-200">
                     <div>
                         <p class="font-semibold text-slate-900">{{ $vehicle->description ?: 'Unknown Vehicle' }}</p>
                         <div class="mt-0.5 flex flex-wrap gap-x-3 text-xs text-slate-500">
@@ -72,10 +75,11 @@
                             @endif
                         </div>
                     </div>
-                    <svg class="h-4 w-4 shrink-0 text-slate-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                </a>
+                    <a href="{{ route('customers.vehicles.edit', [$customer, $vehicle]) }}" wire:navigate
+                       class="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                        Edit
+                    </a>
+                </div>
             @empty
                 <div class="rounded-xl bg-white px-6 py-8 text-center shadow-sm ring-1 ring-slate-200">
                     <p class="text-sm text-slate-500">No vehicles yet.</p>
