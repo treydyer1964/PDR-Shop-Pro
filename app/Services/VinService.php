@@ -147,10 +147,12 @@ class VinService
                             [
                                 'type' => 'text',
                                 'text' => 'Find the Vehicle Identification Number (VIN) in this image. '
-                                    . 'A VIN is exactly 17 characters using only letters (A-Z except I, O, Q) and digits (0-9). '
-                                    . 'Look for it on door jamb stickers (labeled "VIN:"), window stickers, dashboard, or barcodes on stickers. '
-                                    . 'Respond with ONLY the 17-character VIN in uppercase. '
-                                    . 'If you cannot find a VIN, respond with exactly: NONE',
+                                    . 'A VIN is EXACTLY 17 characters — letters A-Z (never I, O, or Q) and digits 0-9 only. '
+                                    . 'Look for it labeled "VIN:" on door jamb stickers, dashboard, or window stickers. '
+                                    . 'Read each character carefully left to right and count: you must have exactly 17. '
+                                    . 'Do not skip or merge any characters. '
+                                    . 'Respond with ONLY the 17-character VIN in uppercase, no spaces or dashes. '
+                                    . 'If you cannot read a complete 17-character VIN, respond with: NONE',
                             ],
                         ],
                     ]],
@@ -168,11 +170,12 @@ class VinService
                 'image_kb' => round(strlen($base64Image) * 3 / 4 / 1024),
             ]);
 
-            // Extract 17-char VIN from response.
-            // Skip check-digit validation for OCR results — a single misread character
-            // would fail the check digit even if the rest is correct.
-            if (preg_match('/[A-HJ-NPR-Z0-9]{17}/i', $text, $matches)) {
-                return strtoupper($matches[0]);
+            // Extract VIN from response.
+            // Accept 14–18 char near-matches so a single dropped character doesn't
+            // silently fail — caller checks strlen to distinguish exact vs partial.
+            $text = strtoupper(trim($text));
+            if (preg_match('/[A-HJ-NPR-Z0-9]{14,18}/', $text, $matches)) {
+                return $matches[0];
             }
 
             return null;

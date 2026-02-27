@@ -29,7 +29,10 @@ class VehicleController extends Controller
             return response()->json(['error' => 'No VIN found in image'], 422);
         }
 
-        return response()->json(['vin' => $vin]);
+        return response()->json([
+            'vin'     => $vin,
+            'partial' => strlen($vin) !== 17,
+        ]);
     }
 
     public function create(Customer $customer)

@@ -185,7 +185,8 @@
                                 }
                             }
                          })"
-                         @vin-scanned.window="$wire.set('vVin', $event.detail.vin); decodeVin($event.detail.vin)">
+                         @vin-scanned.window="$wire.set('vVin', $event.detail.vin); decodeVin($event.detail.vin)"
+                         @vin-partial.window="$wire.set('vVin', $event.detail.vin)">
                         <p class="text-sm font-medium text-slate-700">New Vehicle</p>
 
                         {{-- VIN --}}

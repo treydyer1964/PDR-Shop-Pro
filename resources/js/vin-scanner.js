@@ -89,15 +89,22 @@ window.vinScanner = function () {
 
             try {
                 // Layer 1: try ZXing barcode decode from the image
-                let vin = await this.tryZxingFromFile(file);
-
-                // Layer 2: ZXing failed — send to OpenAI Vision
-                if (!vin) {
-                    vin = await this.tryOpenAiVision(file);
-                }
-
+                const vin = await this.tryZxingFromFile(file);
                 if (vin) {
                     window.dispatchEvent(new CustomEvent('vin-scanned', { detail: { vin } }));
+                    return;
+                }
+
+                // Layer 2: OpenAI Vision
+                const result = await this.tryOpenAiVision(file);
+                if (result) {
+                    if (result.partial) {
+                        // Pre-fill manual input so user can spot the missing/wrong character
+                        window.dispatchEvent(new CustomEvent('vin-partial', { detail: { vin: result.vin } }));
+                        this.error = `OCR read ${result.vin.length} of 17 chars: "${result.vin}" — check and correct the VIN below.`;
+                    } else {
+                        window.dispatchEvent(new CustomEvent('vin-scanned', { detail: { vin: result.vin } }));
+                    }
                 } else {
                     this.error = 'No VIN found in photo. Try again or type the VIN manually.';
                 }
@@ -189,7 +196,8 @@ window.vinScanner = function () {
 
             if (!response.ok) return null;
             const data = await response.json();
-            return data.vin || null;
+            if (!data.vin) return null;
+            return { vin: data.vin, partial: !!data.partial };
         },
 
         stopScan() {
