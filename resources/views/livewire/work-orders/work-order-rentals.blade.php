@@ -123,6 +123,7 @@
                     @else
                         <span class="text-slate-500">No</span>
                     @endif
+                    <button wire:click="openCoverageForm" class="ml-2 text-xs text-blue-500 hover:text-blue-700">Edit</button>
                 </div>
                 @if($totalDays > 0)
                     <div>
@@ -146,6 +147,34 @@
                         class="text-xs text-red-500 hover:text-red-700">Remove Rental</button>
             </div>
         </div>
+
+        {{-- Coverage edit form --}}
+        @if($showCoverageForm)
+            <div class="border-t border-slate-100 bg-slate-50/60 px-5 py-4 space-y-3">
+                <p class="text-xs font-semibold text-slate-600">Edit Insurance Coverage</p>
+                <div class="flex items-center gap-3">
+                    <input wire:model="hasInsurance" type="checkbox" id="editHasIns"
+                           class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                    <label for="editHasIns" class="text-sm text-slate-700">Customer has rental coverage (bill insurance)</label>
+                </div>
+                @if($hasInsurance)
+                    <div class="max-w-xs">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Insurance Daily Rate ($)</label>
+                        <input wire:model="insuranceDailyRate" type="number" step="0.01" min="0" placeholder="0.00"
+                               class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        @error('insuranceDailyRate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                @endif
+                <div class="flex gap-2">
+                    <button wire:click="updateRentalInsurance"
+                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+                        Save
+                    </button>
+                    <button wire:click="$set('showCoverageForm', false)"
+                            class="text-sm text-slate-500 hover:text-slate-700">Cancel</button>
+                </div>
+            </div>
+        @endif
 
         {{-- ── Segments ──────────────────────────────────────────────────────── --}}
         <div class="border-t border-slate-100">

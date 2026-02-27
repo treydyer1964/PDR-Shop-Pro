@@ -31,6 +31,9 @@ class WorkOrderRentals extends Component
     public string $segNotes         = '';
     public bool   $showSegmentForm  = false;
 
+    // Coverage edit form
+    public bool   $showCoverageForm         = false;
+
     // Reimbursement form
     public bool   $showReimburseForm        = false;
     public string $insuranceAmountReceived  = '';
@@ -106,6 +109,16 @@ class WorkOrderRentals extends Component
         unset($this->rental);
     }
 
+    public function openCoverageForm(): void
+    {
+        $rental = $this->rental;
+        if (! $rental) return;
+
+        $this->hasInsurance       = (bool) $rental->has_insurance_coverage;
+        $this->insuranceDailyRate = $rental->insurance_daily_rate ?? '';
+        $this->showCoverageForm   = true;
+    }
+
     public function updateRentalInsurance(): void
     {
         $rental = $this->rental;
@@ -123,6 +136,8 @@ class WorkOrderRentals extends Component
                 : null,
         ]);
 
+        $this->showCoverageForm = false;
+        $this->reset(['hasInsurance', 'insuranceDailyRate']);
         unset($this->rental);
     }
 
