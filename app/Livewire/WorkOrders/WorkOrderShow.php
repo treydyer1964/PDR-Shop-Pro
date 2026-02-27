@@ -213,6 +213,14 @@ class WorkOrderShow extends Component
         $this->workOrder->refresh();
     }
 
+    public function startEditSubTaskDate(string $field, ?string $currentDate = null): void
+    {
+        $this->editingSubTask = $field;
+        $this->subTaskDate    = $currentDate
+            ? \Carbon\Carbon::parse($currentDate)->toDateString()
+            : now()->toDateString();
+    }
+
     public function updateSubTaskDate(string $field): void
     {
         $this->validate(['subTaskDate' => 'required|date']);

@@ -393,11 +393,20 @@ class WorkOrder extends Model
 
     // ── Analytics helpers ──────────────────────────────────────────────────────
 
-    /** Calendar days from Acquired to now (or to Delivered) */
+    /** Calendar days from Acquired (status log entered_at) to now (or to Delivered) */
     public function daysInShop(): int
     {
-        $start = $this->created_at;
-        $end   = $this->isDelivered() ? $this->updated_at : now();
+        $acquiredLog = $this->statusLogs
+            ->where('status', WorkOrderStatus::Acquired->value)
+            ->first();
+
+        $start = $acquiredLog?->entered_at ?? $this->created_at;
+
+        $deliveredLog = $this->statusLogs
+            ->where('status', WorkOrderStatus::Delivered->value)
+            ->first();
+
+        $end = $deliveredLog?->entered_at ?? now();
 
         return (int) $start->diffInDays($end);
     }

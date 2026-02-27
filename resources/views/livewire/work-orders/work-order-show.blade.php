@@ -212,8 +212,25 @@
                         <span @class(['text-sm flex-1', 'text-slate-800' => $workOrder->teardown_completed_at, 'text-slate-400' => !$workOrder->teardown_completed_at])>
                             Teardown
                         </span>
-                        @if($workOrder->teardown_completed_at)
-                            <span class="text-xs text-slate-400">{{ $workOrder->teardown_completed_at->format('M j, Y') }}</span>
+                        @if($editingSubTask === 'teardown_completed_at')
+                            <div class="flex items-center gap-1">
+                                <input wire:model="subTaskDate" type="date"
+                                       class="rounded border-slate-300 text-xs py-0.5 focus:border-blue-500 focus:ring-blue-500" />
+                                <button wire:click="updateSubTaskDate('teardown_completed_at')"
+                                        class="text-xs text-blue-600 font-medium">Set</button>
+                                <button wire:click="$set('editingSubTask', null)"
+                                        class="text-xs text-slate-400">✕</button>
+                            </div>
+                        @elseif($workOrder->teardown_completed_at)
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-slate-400">{{ $workOrder->teardown_completed_at->format('M j, Y') }}</span>
+                                <button wire:click="startEditSubTaskDate('teardown_completed_at', '{{ $workOrder->teardown_completed_at->toDateString() }}')"
+                                        class="text-slate-300 hover:text-blue-500 transition-colors" title="Edit date">
+                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" />
+                                    </svg>
+                                </button>
+                            </div>
                         @endif
                     </div>
 
