@@ -49,10 +49,20 @@ class WorkOrderRental extends Model
         return $this->hasOne(RentalReimbursement::class);
     }
 
-    /** Total days across all completed segments */
+    /**
+     * Total days across all segments.
+     * Completed segments use their stored days value.
+     * Open segments (still out, no end_date) count days from start_date to today.
+     */
     public function totalDays(): int
     {
-        return (int) $this->segments->whereNotNull('end_date')->sum('days');
+        $closedDays = (int) $this->segments->whereNotNull('end_date')->sum('days');
+
+        $openDays = $this->segments
+            ->filter(fn($s) => $s->end_date === null && $s->start_date !== null)
+            ->sum(fn($s) => (int) \Carbon\Carbon::parse($s->start_date)->diffInDays(now()));
+
+        return $closedDays + $openDays;
     }
 
     /** Total internal cost = vehicle daily rate × total days */

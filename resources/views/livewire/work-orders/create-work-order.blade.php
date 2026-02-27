@@ -281,8 +281,13 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-slate-600">Color</label>
-                                <input wire:model="vColor" type="text" placeholder="Silver"
-                                       class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                                <select wire:model="vColor"
+                                        class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="">— Select color —</option>
+                                    @foreach($this->vehicleColors as $c)
+                                        <option value="{{ $c }}">{{ $c }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-600">Plate</label>

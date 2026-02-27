@@ -38,7 +38,8 @@ class RentalService
         if ($totalCost > 0) {
             $days = $rental->totalDays();
             $dailyRate = $rental->vehicle?->internal_daily_cost ?? 0;
-            $note = "{$days} day(s) @ \${$dailyRate}/day";
+            $hasOpen = $rental->segments->whereNull('end_date')->isNotEmpty();
+            $note = "{$days} day(s) @ \${$dailyRate}/day" . ($hasOpen ? ' (running)' : '');
 
             if ($existing) {
                 $existing->update(['amount' => $totalCost, 'notes' => $note]);

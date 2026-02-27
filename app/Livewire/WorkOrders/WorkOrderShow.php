@@ -5,6 +5,8 @@ namespace App\Livewire\WorkOrders;
 use App\Enums\WorkOrderStatus;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderEvent;
+use App\Models\WorkOrderRental;
+use App\Models\WorkOrderStatusLog;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -37,6 +39,10 @@ class WorkOrderShow extends Component
     public ?string $editingSubTask = null;
     public string $subTaskDate     = '';
 
+    // Status log date editing
+    public ?int   $editingLogId  = null;
+    public string $editLogDate   = '';
+
     public function mount(WorkOrder $workOrder): void
     {
         abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
@@ -66,6 +72,43 @@ class WorkOrderShow extends Component
     public function statusLogs()
     {
         return $this->workOrder->statusLogs()->with('user')->get();
+    }
+
+    #[Computed]
+    public function recentNotes()
+    {
+        return $this->workOrder->events()
+            ->where('type', WorkOrderEvent::TYPE_NOTE)
+            ->with('user')
+            ->latest()
+            ->take(2)
+            ->get();
+    }
+
+    #[Computed]
+    public function rentalSummary(): ?WorkOrderRental
+    {
+        return WorkOrderRental::where('work_order_id', $this->workOrder->id)
+            ->with(['vehicle', 'segments'])
+            ->first();
+    }
+
+    #[Computed]
+    public function expenseTotal(): float
+    {
+        return (float) $this->workOrder->expenses()->sum('amount');
+    }
+
+    #[Computed]
+    public function netAmount(): float
+    {
+        return ($this->workOrder->invoice_total ?? 0) - $this->expenseTotal;
+    }
+
+    #[Computed]
+    public function teamCount(): int
+    {
+        return $this->workOrder->assignments()->count();
     }
 
     // ── Status transitions ─────────────────────────────────────────────────────
@@ -235,6 +278,37 @@ class WorkOrderShow extends Component
     {
         $this->workOrder->update([$field => null]);
         $this->workOrder->refresh();
+    }
+
+    // ── Status log date editing ────────────────────────────────────────────────
+
+    public function startEditLogDate(int $logId): void
+    {
+        $log = WorkOrderStatusLog::findOrFail($logId);
+        abort_unless($log->tenant_id === auth()->user()->tenant_id, 403);
+        $this->editingLogId = $logId;
+        $this->editLogDate  = $log->entered_at->toDateString();
+    }
+
+    public function saveLogDate(): void
+    {
+        $this->validate(['editLogDate' => 'required|date']);
+
+        $log = WorkOrderStatusLog::findOrFail($this->editingLogId);
+        abort_unless($log->tenant_id === auth()->user()->tenant_id, 403);
+
+        $log->update(['entered_at' => \Carbon\Carbon::parse($this->editLogDate)->startOfDay()]);
+
+        $this->editingLogId = null;
+        $this->editLogDate  = '';
+        $this->workOrder->refresh();
+        unset($this->statusLogs);
+    }
+
+    public function cancelEditLogDate(): void
+    {
+        $this->editingLogId = null;
+        $this->editLogDate  = '';
     }
 
     public function render()

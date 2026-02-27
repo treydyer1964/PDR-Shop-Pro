@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\InsuranceCompany;
 use App\Models\Location;
 use App\Models\Vehicle;
+use App\Models\VehicleColor;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderStatusLog;
 use Livewire\Attributes\Computed;
@@ -110,6 +111,12 @@ class CreateWorkOrder extends Component
             ->where('active', true)
             ->orderBy('name')
             ->get();
+    }
+
+    #[Computed]
+    public function vehicleColors(): array
+    {
+        return VehicleColor::active()->pluck('name')->toArray();
     }
 
     #[Computed]

@@ -50,6 +50,7 @@ Route::middleware(['auth'])->group(function () {
     // Payroll & Commissions
     Route::get('/payroll', [PayRunController::class, 'index'])->name('payroll.index');
     Route::get('/payroll/create', [PayRunController::class, 'create'])->name('payroll.create');
+    Route::get('/payroll/{payRun}/staff/{user}/pdf', [PayRunController::class, 'staffPdf'])->name('payroll.staff-pdf');
     Route::get('/payroll/{payRun}', [PayRunController::class, 'show'])->name('payroll.show');
     Route::get('/commissions', [CommissionController::class, 'index'])->name('commissions.index');
 
@@ -65,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/settings/locations', [SettingsController::class, 'locations'])->name('settings.locations');
     Route::get('/settings/expense-categories', [SettingsController::class, 'expenseCategories'])->name('settings.expense-categories');
     Route::get('/settings/appointment-types', [SettingsController::class, 'appointmentTypes'])->name('settings.appointment-types');
+    Route::get('/settings/vehicle-colors', [SettingsController::class, 'vehicleColors'])->name('settings.vehicle-colors');
+    Route::get('/settings/insurance-companies', [SettingsController::class, 'insuranceCompanies'])->name('settings.insurance-companies');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

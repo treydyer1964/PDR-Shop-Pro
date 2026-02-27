@@ -4,7 +4,9 @@ namespace App\Livewire\Vehicles;
 
 use App\Models\Customer;
 use App\Models\Vehicle;
+use App\Models\VehicleColor;
 use App\Services\VinService;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -196,6 +198,12 @@ class VehicleForm extends Component
             session()->flash('success', 'Vehicle added.');
             $this->redirect(route('customers.show', $this->customer), navigate: true);
         }
+    }
+
+    #[Computed]
+    public function vehicleColors(): array
+    {
+        return VehicleColor::active()->pluck('name')->toArray();
     }
 
     public function render()

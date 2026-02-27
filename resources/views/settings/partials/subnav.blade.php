@@ -6,6 +6,8 @@
                 ['route' => 'settings.locations',            'label' => 'Locations'],
                 ['route' => 'settings.expense-categories',   'label' => 'Expense Categories'],
                 ['route' => 'settings.appointment-types',    'label' => 'Appointment Types'],
+                ['route' => 'settings.vehicle-colors',       'label' => 'Vehicle Colors'],
+                ['route' => 'settings.insurance-companies',  'label' => 'Insurance Companies'],
             ];
         @endphp
         @foreach($links as $link)

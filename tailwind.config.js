@@ -8,6 +8,7 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
         './app/Livewire/**/*.php',
+        './app/Enums/**/*.php',
         './app/View/Components/**/*.php',
     ],
 

@@ -31,4 +31,14 @@ class SettingsController extends Controller
     {
         return view('settings.appointment-types');
     }
+
+    public function vehicleColors(): View
+    {
+        return view('settings.vehicle-colors');
+    }
+
+    public function insuranceCompanies(): View
+    {
+        return view('settings.insurance-companies');
+    }
 }

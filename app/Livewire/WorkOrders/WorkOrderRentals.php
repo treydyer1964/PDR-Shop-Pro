@@ -40,6 +40,15 @@ class WorkOrderRentals extends Component
     public function mount(WorkOrder $workOrder): void
     {
         $this->workOrder = $workOrder;
+
+        // Re-sync expense on load — open segments accrue daily, so the
+        // running total needs refreshing each time the page is viewed.
+        $existing = WorkOrderRental::where('work_order_id', $workOrder->id)
+            ->with(['vehicle', 'segments'])
+            ->first();
+        if ($existing) {
+            app(RentalService::class)->syncExpense($existing);
+        }
     }
 
     #[Computed]
