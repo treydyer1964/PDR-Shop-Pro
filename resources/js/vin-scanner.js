@@ -1,4 +1,4 @@
-import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library';
+import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType, NotFoundException } from '@zxing/library';
 
 /**
  * VIN Scanner Alpine.js component.
@@ -33,9 +33,24 @@ window.vinScanner = function () {
         async startLiveScan() {
             this.scanning = true;
             try {
-                this.reader = new BrowserMultiFormatReader();
+                const hints = new Map();
+                hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+                    BarcodeFormat.CODE_128,
+                    BarcodeFormat.CODE_39,
+                    BarcodeFormat.QR_CODE,
+                    BarcodeFormat.DATA_MATRIX,
+                    BarcodeFormat.PDF_417,
+                ]);
+                hints.set(DecodeHintType.TRY_HARDER, true);
+                this.reader = new BrowserMultiFormatReader(hints);
                 await this.reader.decodeFromConstraints(
-                    { video: { facingMode: { ideal: 'environment' } } },
+                    {
+                        video: {
+                            facingMode: { ideal: 'environment' },
+                            width:  { ideal: 1920 },
+                            height: { ideal: 1080 },
+                        }
+                    },
                     this.$refs.videoEl,
                     (result, err) => {
                         if (result) {

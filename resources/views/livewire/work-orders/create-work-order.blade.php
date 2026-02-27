@@ -227,6 +227,10 @@
                                 <p class="absolute top-2 left-0 right-0 text-center text-xs font-medium text-white drop-shadow">
                                     Point at VIN barcode — windshield or door jamb
                                 </p>
+                                <button @click="stopScan(); $refs.photoInput.click()" type="button"
+                                        class="absolute bottom-2 left-2 rounded-full bg-blue-600/80 px-3 py-1.5 text-xs font-semibold text-white">
+                                    Take Photo Instead
+                                </button>
                                 <button @click="stopScan()" type="button"
                                         class="absolute bottom-2 right-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white">
                                     Cancel
