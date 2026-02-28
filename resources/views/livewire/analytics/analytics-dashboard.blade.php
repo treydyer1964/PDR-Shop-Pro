@@ -554,7 +554,7 @@
                         <tbody class="divide-y divide-slate-100">
                             @foreach($wos as $wo)
                                 @php
-                                    $advisor = $wo->assignments->first(fn($a) => $a->role === \App\Enums\Role::SalesAdvisor);
+                                    $advisor = $wo->assignments->first(fn($a) => $a->role === \App\Enums\Role::SALES_ADVISOR);
                                     $net = $wo->netTotal();
                                 @endphp
                                 <tr class="hover:bg-slate-50/50 transition-colors">
