@@ -287,13 +287,13 @@ class AnalyticsDashboard extends Component
             })
             ->values();
 
-        $advisors = $byUserRole->filter(fn ($r) => $r['role'] === Role::SalesAdvisor)
+        $advisors = $byUserRole->filter(fn ($r) => $r['role'] === Role::SALES_ADVISOR)
             ->sortByDesc('total_commission')->values();
 
-        $techs = $byUserRole->filter(fn ($r) => $r['role'] === Role::PdrTech)
+        $techs = $byUserRole->filter(fn ($r) => $r['role'] === Role::PDR_TECH)
             ->sortByDesc('total_commission')->values();
 
-        $others = $byUserRole->filter(fn ($r) => !in_array($r['role'], [Role::SalesAdvisor, Role::PdrTech]))
+        $others = $byUserRole->filter(fn ($r) => !in_array($r['role'], [Role::SALES_ADVISOR, Role::PDR_TECH]))
             ->sortByDesc('total_commission')->values();
 
         return compact('advisors', 'techs', 'others');
@@ -367,7 +367,7 @@ class AnalyticsDashboard extends Component
             ->when($this->woFilterJobType, fn ($q) => $q->where('job_type', $this->woFilterJobType))
             ->when($this->woFilterAdvisor, fn ($q) => $q->whereHas('assignments', fn ($aq) =>
                 $aq->where('user_id', $this->woFilterAdvisor)
-                   ->where('role', Role::SalesAdvisor->value)
+                   ->where('role', Role::SALES_ADVISOR->value)
             ))
             ->orderByDesc('created_at');
 
