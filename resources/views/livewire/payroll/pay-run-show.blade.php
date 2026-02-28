@@ -28,6 +28,42 @@
 
     {{-- Staff breakdown --}}
     @foreach($this->staffSummary as $row)
+        @php
+            $mailTenant  = auth()->user()->tenant;
+            $mailSubject = rawurlencode('Earnings Statement – ' . $payRun->name);
+            $mailLines   = [
+                'Hi ' . $row['user']->name . ',',
+                '',
+                'Pay Run: ' . $payRun->name,
+            ];
+            if ($payRun->period_start || $payRun->period_end) {
+                $mailLines[] = 'Period: '
+                    . ($payRun->period_start?->format('M j, Y') ?? '—')
+                    . ' to '
+                    . ($payRun->period_end?->format('M j, Y') ?? '—');
+            }
+            $mailLines[] = 'Issued: ' . now()->format('M j, Y');
+            $mailLines[] = '';
+            $mailLines[] = str_repeat('-', 40);
+            $mailLines[] = '';
+            foreach ($row['commissions'] as $c) {
+                $wo = $c->workOrder;
+                $v  = $wo->vehicle;
+                $mailLines[] = trim($v?->year . ' ' . $v?->make . ' ' . $v?->model)
+                    . ' – ' . ($wo->customer?->last_name ?? '')
+                    . ' (' . $wo->ro_number . ')';
+                $mailLines[] = $c->role->label() . ': $' . number_format((float) $c->amount, 2);
+                $mailLines[] = '';
+            }
+            $mailLines[] = str_repeat('-', 40);
+            $mailLines[] = 'TOTAL EARNINGS: $' . number_format((float) $row['total'], 2);
+            $mailLines[] = '';
+            $mailLines[] = $mailTenant->name;
+            $mailBody    = rawurlencode(implode("\n", $mailLines));
+            $mailtoHref  = 'mailto:' . $row['user']->email
+                . '?subject=' . $mailSubject
+                . '&body=' . $mailBody;
+        @endphp
         <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
             {{-- Staff header --}}
             <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-5 py-3">
@@ -41,6 +77,15 @@
                         </svg>
                         Pay Stub
                     </a>
+                    @if($row['user']->email)
+                    <a href="{{ $mailtoHref }}"
+                       class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                        </svg>
+                        Email
+                    </a>
+                    @endif
                 </div>
             </div>
 
