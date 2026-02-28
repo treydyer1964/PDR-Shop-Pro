@@ -63,6 +63,11 @@
             <x-nav-item route="rentals.index" icon="key">Rentals</x-nav-item>
             <x-nav-item route="staff.index" icon="user-group">Staff</x-nav-item>
 
+            <div class="pt-4 pb-1 px-2">
+                <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Reporting</p>
+            </div>
+            <x-nav-item route="analytics.index" icon="chart-bar">Analytics</x-nav-item>
+
             @if(auth()->user()?->canManageStaff())
             <div class="pt-4 pb-1 px-2">
                 <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Admin</p>

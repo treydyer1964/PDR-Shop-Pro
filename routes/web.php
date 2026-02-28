@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CommissionController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\PhotoShareController;
@@ -23,7 +25,10 @@ Route::get('/share/{workOrder}', [PhotoShareController::class, 'show'])->name('p
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard
-    Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Analytics
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 
     // VIN extraction via OpenAI Vision
     Route::post('/vin/extract', [VehicleController::class, 'extractVin'])->name('vin.extract');
