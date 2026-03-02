@@ -67,6 +67,37 @@
             </div>
         </div>
 
+        {{-- ID / License --}}
+        <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4 space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">ID &amp; License <span class="normal-case text-slate-400 font-normal">(needed for rental agreements)</span></p>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                    <label for="birthdate" class="block text-sm font-medium text-slate-700">Date of Birth</label>
+                    <input wire:model="birthdate" id="birthdate" type="date"
+                        class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
+                    @error('birthdate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label for="drivers_license" class="block text-sm font-medium text-slate-700">Driver's License #</label>
+                    <input wire:model="drivers_license" id="drivers_license" type="text" autocomplete="off"
+                        class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm uppercase"
+                        placeholder="e.g. 12345678" />
+                    @error('drivers_license') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label for="drivers_license_state" class="block text-sm font-medium text-slate-700">DL State</label>
+                    <select wire:model="drivers_license_state" id="drivers_license_state"
+                        class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <option value="">—</option>
+                        @foreach(['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'] as $abbr)
+                            <option value="{{ $abbr }}">{{ $abbr }}</option>
+                        @endforeach
+                    </select>
+                    @error('drivers_license_state') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        </div>
+
         {{-- Notes --}}
         <div>
             <label for="notes" class="block text-sm font-medium text-slate-700">Notes</label>

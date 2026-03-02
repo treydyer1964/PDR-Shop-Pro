@@ -91,7 +91,29 @@
                                 <input wire:model="cEmail" type="email" inputmode="email" placeholder="john@example.com"
                                        class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                             </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600">Date of Birth</label>
+                                <input wire:model="cBirthdate" type="date"
+                                       class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                                @error('cBirthdate') <p class="mt-0.5 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600">Driver's License #</label>
+                                <input wire:model="cDriversLicense" type="text" placeholder="e.g. 12345678"
+                                       class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 uppercase" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600">DL State</label>
+                                <select wire:model="cDriversLicenseState"
+                                        class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="">—</option>
+                                    @foreach(['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'] as $abbr)
+                                        <option value="{{ $abbr }}">{{ $abbr }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
+                        <p class="text-xs text-slate-400">DOB and DL# are optional but needed for rental agreements.</p>
                         <button wire:click="$set('creatingNewCustomer', false)" type="button"
                                 class="text-xs text-slate-500 hover:text-slate-700">← Back to search</button>
                     </div>

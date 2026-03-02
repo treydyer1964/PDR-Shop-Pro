@@ -11,6 +11,11 @@ class Customer extends Model
     protected $fillable = [
         'tenant_id', 'first_name', 'last_name',
         'phone', 'email', 'address', 'city', 'state', 'zip', 'notes',
+        'birthdate', 'drivers_license', 'drivers_license_state',
+    ];
+
+    protected $casts = [
+        'birthdate' => 'date',
     ];
 
     public function tenant(): BelongsTo

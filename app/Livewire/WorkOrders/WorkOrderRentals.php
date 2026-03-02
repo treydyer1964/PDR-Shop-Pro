@@ -31,6 +31,16 @@ class WorkOrderRentals extends Component
     public string $segNotes         = '';
     public bool   $showSegmentForm  = false;
 
+    // Segment odometer / fuel
+    public string $segOdometerOut  = '';
+    public string $segFuelLevelOut = '';
+    public string $segOdometerIn   = '';
+    public string $segFuelLevelIn  = '';
+
+    // Close segment form (when returning vehicle)
+    public ?int   $closingSegmentId = null;
+    public bool   $showCloseForm    = false;
+
     // Coverage edit form
     public bool   $showCoverageForm         = false;
 
@@ -163,15 +173,24 @@ class WorkOrderRentals extends Component
         $this->segStartDate    = now()->toDateString();
         $this->segEndDate      = '';
         $this->segNotes        = '';
+        $this->segOdometerOut  = '';
+        $this->segFuelLevelOut = '';
+        $this->segOdometerIn   = '';
+        $this->segFuelLevelIn  = '';
         $this->showSegmentForm = true;
+        $this->showCloseForm   = false;
     }
 
     public function addSegment(): void
     {
         $this->validate([
-            'segStartDate' => 'required|date',
-            'segEndDate'   => 'nullable|date|after_or_equal:segStartDate',
-            'segNotes'     => 'nullable|string|max:500',
+            'segStartDate'     => 'required|date',
+            'segEndDate'       => 'nullable|date|after_or_equal:segStartDate',
+            'segNotes'         => 'nullable|string|max:500',
+            'segOdometerOut'   => 'nullable|integer|min:0',
+            'segFuelLevelOut'  => 'nullable|in:F,3/4,1/2,1/4,E',
+            'segOdometerIn'    => 'nullable|integer|min:0',
+            'segFuelLevelIn'   => 'nullable|in:F,3/4,1/2,1/4,E',
         ], [
             'segEndDate.after_or_equal' => 'Return date must be on or after the pickup date.',
         ]);
@@ -179,11 +198,15 @@ class WorkOrderRentals extends Component
         $rental = WorkOrderRental::findOrFail($this->activeRentalId);
 
         $segment = RentalSegment::create([
-            'tenant_id'           => $this->workOrder->tenant_id,
+            'tenant_id'            => $this->workOrder->tenant_id,
             'work_order_rental_id' => $rental->id,
-            'start_date'          => $this->segStartDate,
-            'end_date'            => $this->segEndDate ?: null,
-            'notes'               => $this->segNotes ?: null,
+            'start_date'           => $this->segStartDate,
+            'end_date'             => $this->segEndDate ?: null,
+            'notes'                => $this->segNotes ?: null,
+            'odometer_out'         => $this->segOdometerOut !== '' ? (int) $this->segOdometerOut : null,
+            'fuel_level_out'       => $this->segFuelLevelOut ?: null,
+            'odometer_in'          => $this->segOdometerIn !== '' ? (int) $this->segOdometerIn : null,
+            'fuel_level_in'        => $this->segFuelLevelIn ?: null,
         ]);
 
         $rental->load('segments', 'vehicle');
@@ -191,20 +214,56 @@ class WorkOrderRentals extends Component
 
         $this->showSegmentForm = false;
         $this->activeRentalId  = null;
-        $this->reset(['segStartDate', 'segEndDate', 'segNotes']);
+        $this->reset(['segStartDate', 'segEndDate', 'segNotes', 'segOdometerOut', 'segFuelLevelOut', 'segOdometerIn', 'segFuelLevelIn']);
 
         unset($this->rental);
     }
 
-    public function closeSegment(int $segmentId): void
+    public function openCloseForm(int $segmentId): void
     {
-        $segment = RentalSegment::findOrFail($segmentId);
-        $segment->update(['end_date' => now()->toDateString()]);
+        $this->closingSegmentId = $segmentId;
+        $this->segEndDate       = now()->toDateString();
+        $this->segOdometerIn    = '';
+        $this->segFuelLevelIn   = '';
+        $this->showCloseForm    = true;
+        $this->showSegmentForm  = false;
+    }
+
+    public function closeSegmentWithDetails(): void
+    {
+        $this->validate([
+            'segEndDate'    => 'required|date',
+            'segOdometerIn' => 'nullable|integer|min:0',
+            'segFuelLevelIn' => 'nullable|in:F,3/4,1/2,1/4,E',
+        ]);
+
+        $segment = RentalSegment::findOrFail($this->closingSegmentId);
+        $segment->update([
+            'end_date'     => $this->segEndDate,
+            'odometer_in'  => $this->segOdometerIn !== '' ? (int) $this->segOdometerIn : null,
+            'fuel_level_in' => $this->segFuelLevelIn ?: null,
+        ]);
 
         $rental = $segment->workOrderRental()->with('segments', 'vehicle')->first();
         app(RentalService::class)->syncExpense($rental);
 
+        $this->showCloseForm    = false;
+        $this->closingSegmentId = null;
+        $this->reset(['segEndDate', 'segOdometerIn', 'segFuelLevelIn']);
+
         unset($this->rental);
+    }
+
+    public function cancelCloseForm(): void
+    {
+        $this->showCloseForm    = false;
+        $this->closingSegmentId = null;
+    }
+
+    public function closeSegment(int $segmentId): void
+    {
+        // Quick close (no details) — preserved for backward compat, now opens the form
+        $this->openCloseForm($segmentId);
     }
 
     public function deleteSegment(int $segmentId): void

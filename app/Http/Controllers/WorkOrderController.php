@@ -72,4 +72,33 @@ class WorkOrderController extends Controller
         $filename = 'rental-invoice-' . $workOrder->ro_number . '.pdf';
         return $pdf->download($filename);
     }
+
+    public function rentalAgreementPdf(WorkOrder $workOrder): \Illuminate\Http\Response
+    {
+        abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
+
+        $rental = WorkOrderRental::where('work_order_id', $workOrder->id)
+            ->with(['vehicle', 'segments'])
+            ->first();
+
+        $rentalVehicle = $rental?->vehicle;
+
+        // Use the first open segment for pre-filling; fall back to most recent
+        $segment = null;
+        if ($rental) {
+            $segment = $rental->segments->firstWhere('end_date', null)
+                ?? $rental->segments->sortByDesc('start_date')->first();
+        }
+
+        $workOrder->load(['customer', 'vehicle', 'tenant']);
+        $tenant = $workOrder->tenant;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'work-orders.rental-agreement-pdf',
+            compact('workOrder', 'rental', 'rentalVehicle', 'segment', 'tenant')
+        )->setPaper('letter', 'portrait');
+
+        $filename = 'rental-agreement-' . $workOrder->ro_number . '.pdf';
+        return $pdf->stream($filename);
+    }
 }

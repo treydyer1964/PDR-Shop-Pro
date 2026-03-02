@@ -10,6 +10,7 @@ class RentalSegment extends Model
 {
     protected $fillable = [
         'tenant_id', 'work_order_rental_id', 'start_date', 'end_date', 'days', 'notes',
+        'odometer_out', 'odometer_in', 'miles_driven', 'fuel_level_out', 'fuel_level_in',
     ];
 
     protected $casts = [
@@ -44,6 +45,22 @@ class RentalSegment extends Model
                 $segment->days = $segment->computeDays();
             } else {
                 $segment->days = null;
+            }
+
+            // Auto-compute miles driven when odometer_in is set
+            if ($segment->odometer_in !== null && $segment->odometer_out !== null) {
+                $segment->miles_driven = max(0, $segment->odometer_in - $segment->odometer_out);
+            }
+        });
+
+        static::saved(function (self $segment) {
+            // Sync vehicle current odometer to the highest odometer_in seen
+            if ($segment->odometer_in !== null) {
+                $rental = $segment->workOrderRental()->with('vehicle')->first();
+                $vehicle = $rental?->vehicle;
+                if ($vehicle && ($vehicle->current_odometer === null || $segment->odometer_in > $vehicle->current_odometer)) {
+                    $vehicle->update(['current_odometer' => $segment->odometer_in]);
+                }
             }
         });
     }

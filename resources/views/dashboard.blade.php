@@ -82,6 +82,17 @@
             </svg>
             <span class="text-xs font-medium text-slate-600">Rentals</span>
         </a>
+        @if(isset($fleetServiceCount) && $fleetServiceCount > 0)
+        <a href="{{ route('rentals.index') }}" wire:navigate
+           class="flex flex-col items-center gap-2 rounded-xl bg-amber-50 p-4 shadow-sm ring-1 ring-amber-300 hover:ring-amber-400 transition-all text-center">
+            <svg class="h-6 w-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-xs font-semibold text-amber-700">
+                {{ $fleetServiceCount }} vehicle{{ $fleetServiceCount !== 1 ? 's' : '' }} need{{ $fleetServiceCount === 1 ? 's' : '' }} service
+            </span>
+        </a>
+        @endif
         @endif
         <a href="{{ route('appointments.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">

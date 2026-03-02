@@ -34,6 +34,18 @@
                     <p class="text-sm font-medium text-slate-900">{{ collect([$customer->city, $customer->state])->filter()->implode(', ') }}</p>
                 </div>
                 @endif
+                @if($customer->birthdate)
+                <div>
+                    <p class="text-xs text-slate-500">Date of Birth</p>
+                    <p class="text-sm font-medium text-slate-900">{{ $customer->birthdate->format('m/d/Y') }}</p>
+                </div>
+                @endif
+                @if($customer->drivers_license)
+                <div>
+                    <p class="text-xs text-slate-500">Driver's License</p>
+                    <p class="text-sm font-medium text-slate-900 font-mono">{{ $customer->drivers_license }}{{ $customer->drivers_license_state ? ' · ' . $customer->drivers_license_state : '' }}</p>
+                </div>
+                @endif
             </div>
             @else
             <p class="text-sm text-slate-400 italic">No contact information on file.</p>

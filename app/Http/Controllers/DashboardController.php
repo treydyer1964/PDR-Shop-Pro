@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\WorkOrderStatus;
+use App\Models\RentalVehicle;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderCommission;
 
@@ -62,11 +63,21 @@ class DashboardController extends Controller
                 ->sum('amount');
         }
 
+        // Fleet service alert (owner/manager only — non-field staff)
+        $fleetServiceCount = null;
+        if (! $user->isFieldStaff()) {
+            $vehicles = RentalVehicle::forTenant($tenantId)->active()->get();
+            $fleetServiceCount = $vehicles->filter(
+                fn($v) => in_array($v->serviceStatus(), ['overdue', 'due_soon'])
+            )->count();
+        }
+
         return view('dashboard', compact(
             'openJobs',
             'jobsThisMonth',
             'revenueMtd',
             'unpaidCommissions',
+            'fleetServiceCount',
         ));
     }
 }

@@ -37,19 +37,31 @@ class CustomerForm extends Component
     #[Validate('nullable|string|max:1000')]
     public string $notes = '';
 
+    #[Validate('nullable|date|before:today')]
+    public string $birthdate = '';
+
+    #[Validate('nullable|string|max:50')]
+    public string $drivers_license = '';
+
+    #[Validate('nullable|string|max:2')]
+    public string $drivers_license_state = '';
+
     public function mount(?Customer $customer = null): void
     {
         if ($customer?->exists) {
-            $this->customer   = $customer;
-            $this->first_name = $customer->first_name;
-            $this->last_name  = $customer->last_name;
-            $this->phone      = $customer->phone ?? '';
-            $this->email      = $customer->email ?? '';
-            $this->address    = $customer->address ?? '';
-            $this->city       = $customer->city ?? '';
-            $this->state      = $customer->state ?? '';
-            $this->zip        = $customer->zip ?? '';
-            $this->notes      = $customer->notes ?? '';
+            $this->customer               = $customer;
+            $this->first_name             = $customer->first_name;
+            $this->last_name              = $customer->last_name;
+            $this->phone                  = $customer->phone ?? '';
+            $this->email                  = $customer->email ?? '';
+            $this->address                = $customer->address ?? '';
+            $this->city                   = $customer->city ?? '';
+            $this->state                  = $customer->state ?? '';
+            $this->zip                    = $customer->zip ?? '';
+            $this->notes                  = $customer->notes ?? '';
+            $this->birthdate              = $customer->birthdate ? $customer->birthdate->format('Y-m-d') : '';
+            $this->drivers_license        = $customer->drivers_license ?? '';
+            $this->drivers_license_state  = $customer->drivers_license_state ?? '';
         }
     }
 
@@ -58,16 +70,19 @@ class CustomerForm extends Component
         $this->validate();
 
         $data = [
-            'tenant_id'  => auth()->user()->tenant_id,
-            'first_name' => $this->first_name,
-            'last_name'  => $this->last_name,
-            'phone'      => $this->phone ?: null,
-            'email'      => $this->email ?: null,
-            'address'    => $this->address ?: null,
-            'city'       => $this->city ?: null,
-            'state'      => $this->state ?: null,
-            'zip'        => $this->zip ?: null,
-            'notes'      => $this->notes ?: null,
+            'tenant_id'              => auth()->user()->tenant_id,
+            'first_name'             => $this->first_name,
+            'last_name'              => $this->last_name,
+            'phone'                  => $this->phone ?: null,
+            'email'                  => $this->email ?: null,
+            'address'                => $this->address ?: null,
+            'city'                   => $this->city ?: null,
+            'state'                  => $this->state ?: null,
+            'zip'                    => $this->zip ?: null,
+            'notes'                  => $this->notes ?: null,
+            'birthdate'              => $this->birthdate ?: null,
+            'drivers_license'        => $this->drivers_license ?: null,
+            'drivers_license_state'  => $this->drivers_license_state ?: null,
         ];
 
         if ($this->customer?->exists) {

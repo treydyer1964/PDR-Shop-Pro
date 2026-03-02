@@ -28,10 +28,13 @@ class CreateWorkOrder extends Component
     public ?int $customer_id = null;
     public bool $creatingNewCustomer = false;
     // New customer fields
-    public string $cFirst = '';
-    public string $cLast  = '';
-    public string $cPhone = '';
-    public string $cEmail = '';
+    public string $cFirst               = '';
+    public string $cLast                = '';
+    public string $cPhone               = '';
+    public string $cEmail               = '';
+    public string $cBirthdate           = '';
+    public string $cDriversLicense      = '';
+    public string $cDriversLicenseState = '';
 
     // Step 3 — Vehicle
     public ?int $vehicle_id = null;
@@ -160,17 +163,23 @@ class CreateWorkOrder extends Component
     {
         if ($this->creatingNewCustomer) {
             $this->validate([
-                'cFirst' => 'required|string|max:100',
-                'cLast'  => 'required|string|max:100',
-                'cPhone' => 'nullable|string|max:20',
-                'cEmail' => 'nullable|email|max:255',
+                'cFirst'               => 'required|string|max:100',
+                'cLast'                => 'required|string|max:100',
+                'cPhone'               => 'nullable|string|max:20',
+                'cEmail'               => 'nullable|email|max:255',
+                'cBirthdate'           => 'nullable|date|before:today',
+                'cDriversLicense'      => 'nullable|string|max:50',
+                'cDriversLicenseState' => 'nullable|string|max:2',
             ]);
             $customer = Customer::create([
-                'tenant_id'  => auth()->user()->tenant_id,
-                'first_name' => $this->cFirst,
-                'last_name'  => $this->cLast,
-                'phone'      => $this->cPhone ?: null,
-                'email'      => $this->cEmail ?: null,
+                'tenant_id'             => auth()->user()->tenant_id,
+                'first_name'            => $this->cFirst,
+                'last_name'             => $this->cLast,
+                'phone'                 => $this->cPhone ?: null,
+                'email'                 => $this->cEmail ?: null,
+                'birthdate'             => $this->cBirthdate ?: null,
+                'drivers_license'       => $this->cDriversLicense ?: null,
+                'drivers_license_state' => $this->cDriversLicenseState ?: null,
             ]);
             $this->customer_id = $customer->id;
             $this->creatingNewCustomer = false;
