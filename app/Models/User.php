@@ -110,6 +110,10 @@ class User extends Authenticatable
      */
     public function isFieldStaff(): bool
     {
+        // Admin roles always take priority — if a user has owner/bookkeeper/manager they are never field staff.
+        if ($this->hasAnyRole([RoleEnum::OWNER, RoleEnum::BOOKKEEPER, RoleEnum::SALES_MANAGER])) {
+            return false;
+        }
         return $this->hasAnyRole([RoleEnum::PDR_TECH, RoleEnum::RI_TECH, RoleEnum::PORTER, RoleEnum::SALES_ADVISOR]);
     }
 
