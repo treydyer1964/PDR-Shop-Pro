@@ -16,7 +16,8 @@
             @endforeach
         </div>
 
-        {{-- Staff filter --}}
+        {{-- Staff filter (hidden for field staff — always shows their own) --}}
+        @if(!$isFieldStaff)
         <select wire:model.live="filterStaff"
                 class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
             <option value="">All Staff</option>
@@ -24,6 +25,7 @@
                 <option value="{{ $person->id }}">{{ $person->name }}</option>
             @endforeach
         </select>
+        @endif
 
         @if($this->grandTotal > 0)
             <span class="ml-auto text-sm font-semibold text-slate-700">
@@ -42,7 +44,11 @@
             <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 {{-- Staff header --}}
                 <div class="flex items-center justify-between bg-slate-50/60 border-b border-slate-100 px-5 py-2.5">
+                    @if(!$isFieldStaff)
                     <span class="text-sm font-semibold text-slate-800">{{ $row['user']->name }}</span>
+                    @else
+                    <span class="text-sm font-semibold text-slate-800">My Commissions</span>
+                    @endif
                     <div class="flex items-center gap-4">
                         @if($filterStatus === 'all' && ($row['unpaid'] > 0 || $row['paid'] > 0))
                             <span class="text-xs text-slate-500">

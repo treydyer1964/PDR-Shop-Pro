@@ -8,6 +8,7 @@ class StaffController extends Controller
 {
     public function index()
     {
+        abort_if(auth()->user()->isFieldStaff(), 403);
         return view('staff.index');
     }
 
@@ -20,6 +21,7 @@ class StaffController extends Controller
     public function show(User $staff)
     {
         abort_unless($staff->tenant_id === auth()->user()->tenant_id, 403);
+        abort_if(auth()->user()->isFieldStaff(), 403);
         return view('staff.show', compact('staff'));
     }
 

@@ -68,13 +68,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
     });
 
-    // ── Payroll & Commissions: Owner and Bookkeeper only ──────────────────────
+    // ── Commissions: all authenticated users (scoped to self for field staff) ──
+    Route::get('/commissions', [CommissionController::class, 'index'])->name('commissions.index');
+
+    // ── Payroll: Owner and Bookkeeper only ────────────────────────────────────
     Route::middleware('role:owner,bookkeeper')->group(function () {
-        Route::get('/payroll',                         [PayRunController::class, 'index'])->name('payroll.index');
-        Route::get('/payroll/create',                  [PayRunController::class, 'create'])->name('payroll.create');
+        Route::get('/payroll',                           [PayRunController::class, 'index'])->name('payroll.index');
+        Route::get('/payroll/create',                    [PayRunController::class, 'create'])->name('payroll.create');
         Route::get('/payroll/{payRun}/staff/{user}/pdf', [PayRunController::class, 'staffPdf'])->name('payroll.staff-pdf');
-        Route::get('/payroll/{payRun}',                [PayRunController::class, 'show'])->name('payroll.show');
-        Route::get('/commissions',                     [CommissionController::class, 'index'])->name('commissions.index');
+        Route::get('/payroll/{payRun}',                  [PayRunController::class, 'show'])->name('payroll.show');
     });
 
     // ── Settings: Owner only ──────────────────────────────────────────────────

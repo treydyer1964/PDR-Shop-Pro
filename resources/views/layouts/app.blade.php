@@ -50,11 +50,11 @@
             <x-nav-item route="work-orders.index" icon="clipboard-document-list">Work Orders</x-nav-item>
             <x-nav-item route="customers.index" icon="users">Customers</x-nav-item>
 
-            @if(auth()->user()?->canAccessPayroll())
             <div class="pt-4 pb-1 px-2">
                 <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Financial</p>
             </div>
             <x-nav-item route="commissions.index" icon="banknotes">Commissions</x-nav-item>
+            @if(auth()->user()?->canAccessPayroll())
             <x-nav-item route="payroll.index" icon="document-check">Payroll</x-nav-item>
             @endif
 
@@ -62,8 +62,10 @@
                 <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Operations</p>
             </div>
             <x-nav-item route="appointments.index" icon="calendar-days">Appointments</x-nav-item>
+            @if(!auth()->user()?->isFieldStaff())
             <x-nav-item route="rentals.index" icon="key">Rentals</x-nav-item>
             <x-nav-item route="staff.index" icon="user-group">Staff</x-nav-item>
+            @endif
 
             @if(auth()->user()?->canAccessAnalytics())
             <div class="pt-4 pb-1 px-2">

@@ -1,5 +1,6 @@
 <x-app-layout>
     <x-slot name="header">Dashboard</x-slot>
+    @if(auth()->user()->canAccessAnalytics())
     <x-slot name="headerActions">
         <a href="{{ route('analytics.index') }}" wire:navigate
            class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors">
@@ -9,41 +10,49 @@
             Full Analytics
         </a>
     </x-slot>
+    @endif
 
     {{-- KPI cards --}}
-    <div class="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    @php $isFieldStaff = auth()->user()->isFieldStaff(); @endphp
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-2 {{ $isFieldStaff ? '' : 'lg:grid-cols-4' }}">
         <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Open Jobs</p>
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                {{ $isFieldStaff ? 'My Open Jobs' : 'Open Jobs' }}
+            </p>
             <p class="mt-2 text-3xl font-bold text-slate-900">{{ $openJobs }}</p>
             <p class="mt-1 text-xs text-slate-400">Active, not yet delivered</p>
         </div>
         <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Jobs This Month</p>
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                {{ $isFieldStaff ? 'My Jobs This Month' : 'Jobs This Month' }}
+            </p>
             <p class="mt-2 text-3xl font-bold text-slate-900">{{ $jobsThisMonth }}</p>
-            <p class="mt-1 text-xs text-slate-400">Created {{ now()->format('M Y') }}</p>
+            <p class="mt-1 text-xs text-slate-400">{{ now()->format('M Y') }}</p>
         </div>
+        @if(!$isFieldStaff)
         <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
             <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Revenue MTD</p>
             <p class="mt-2 text-3xl font-bold text-slate-900">
-                @if($revenueMtd > 0)
-                    ${{ number_format($revenueMtd, 0) }}
-                @else
-                    $0
-                @endif
+                ${{ number_format($revenueMtd ?? 0, 0) }}
             </p>
             <p class="mt-1 text-xs text-slate-400">Delivered {{ now()->format('M Y') }}</p>
         </div>
+        @endif
         <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Unpaid Commissions</p>
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                {{ $isFieldStaff ? 'My Unpaid Pay' : 'Unpaid Commissions' }}
+            </p>
             <p class="mt-2 text-3xl font-bold {{ $unpaidCommissions > 0 ? 'text-amber-600' : 'text-slate-900' }}">
                 ${{ number_format($unpaidCommissions, 0) }}
             </p>
-            <p class="mt-1 text-xs text-slate-400">Pending pay run</p>
+            <p class="mt-1 text-xs text-slate-400">
+                {{ $isFieldStaff ? 'Pending payment' : 'Pending pay run' }}
+            </p>
         </div>
     </div>
 
     {{-- Quick links --}}
-    <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 {{ $isFieldStaff ? '' : 'lg:grid-cols-6' }}">
         <a href="{{ route('work-orders.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
             <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -58,6 +67,7 @@
             </svg>
             <span class="text-xs font-medium text-slate-600">Commissions</span>
         </a>
+        @if(!$isFieldStaff)
         <a href="{{ route('payroll.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
             <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -72,6 +82,7 @@
             </svg>
             <span class="text-xs font-medium text-slate-600">Rentals</span>
         </a>
+        @endif
         <a href="{{ route('appointments.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
             <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -79,13 +90,15 @@
             </svg>
             <span class="text-xs font-medium text-slate-600">Appointments</span>
         </a>
+        @if(auth()->user()->canAccessAnalytics())
         <a href="{{ route('analytics.index') }}" wire:navigate
-           class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-blue-200 bg-blue-50 hover:ring-blue-400 transition-all text-center">
+           class="flex flex-col items-center gap-2 rounded-xl bg-blue-50 p-4 shadow-sm ring-1 ring-blue-200 hover:ring-blue-400 transition-all text-center">
             <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
             </svg>
             <span class="text-xs font-medium text-blue-600">Analytics</span>
         </a>
+        @endif
     </div>
 
     {{-- Welcome bar --}}

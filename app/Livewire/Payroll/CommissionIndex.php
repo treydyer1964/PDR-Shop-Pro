@@ -9,8 +9,26 @@ use Livewire\Component;
 
 class CommissionIndex extends Component
 {
-    public string $filterStatus = 'unpaid'; // unpaid | paid | all
-    public string $filterStaff  = '';
+    public string $filterStatus  = 'unpaid'; // unpaid | paid | all
+    public string $filterStaff   = '';
+    public bool   $isFieldStaff  = false;
+
+    public function mount(): void
+    {
+        $user = auth()->user();
+        if ($user->isFieldStaff()) {
+            $this->isFieldStaff = true;
+            $this->filterStaff  = (string) $user->id;
+        }
+    }
+
+    // Field staff cannot change their own staff filter
+    public function updatedFilterStaff(): void
+    {
+        if ($this->isFieldStaff) {
+            $this->filterStaff = (string) auth()->id();
+        }
+    }
 
     #[Computed]
     public function staff()
