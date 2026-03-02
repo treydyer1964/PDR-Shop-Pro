@@ -46,6 +46,13 @@ class WorkOrderShow extends Component
     public function mount(WorkOrder $workOrder): void
     {
         abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
+
+        // Field staff can only view work orders they are assigned to
+        if (auth()->user()->isFieldStaff()) {
+            $assigned = $workOrder->assignments()->where('user_id', auth()->id())->exists();
+            abort_unless($assigned, 403);
+        }
+
         $this->workOrder     = $workOrder;
         $this->transitionDate = now()->toDateString();
     }

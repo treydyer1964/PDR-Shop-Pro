@@ -1,5 +1,6 @@
 <x-app-layout>
     <x-slot name="header">Work Orders</x-slot>
+    @if(auth()->user()->canCreateWorkOrders())
     <x-slot name="headerActions">
         <a href="{{ route('work-orders.create') }}"
            wire:navigate
@@ -10,6 +11,7 @@
             New Work Order
         </a>
     </x-slot>
+    @endif
 
     <livewire:work-orders.work-order-list />
 </x-app-layout>

@@ -13,6 +13,7 @@ class StaffController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->canManageStaff(), 403);
         return view('staff.create');
     }
 
@@ -25,12 +26,14 @@ class StaffController extends Controller
     public function edit(User $staff)
     {
         abort_unless($staff->tenant_id === auth()->user()->tenant_id, 403);
+        abort_unless(auth()->user()->canManageStaff(), 403);
         return view('staff.edit', compact('staff'));
     }
 
     public function destroy(User $staff)
     {
         abort_unless($staff->tenant_id === auth()->user()->tenant_id, 403);
+        abort_unless(auth()->user()->canManageStaff(), 403);
         abort_if($staff->id === auth()->id(), 403, 'You cannot delete your own account.');
 
         $staff->delete();

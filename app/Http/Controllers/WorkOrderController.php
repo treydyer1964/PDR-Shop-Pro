@@ -14,18 +14,27 @@ class WorkOrderController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->canCreateWorkOrders(), 403);
         return view('work-orders.create');
     }
 
     public function edit(WorkOrder $workOrder)
     {
         abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
+        // Field staff cannot edit work orders
+        abort_if(auth()->user()->isFieldStaff(), 403);
         return view('work-orders.edit', compact('workOrder'));
     }
 
     public function show(WorkOrder $workOrder)
     {
         abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
+
+        // Field staff can only view work orders they are assigned to
+        if (auth()->user()->isFieldStaff()) {
+            $assigned = $workOrder->assignments()->where('user_id', auth()->id())->exists();
+            abort_unless($assigned, 403);
+        }
 
         $workOrder->load([
             'customer',

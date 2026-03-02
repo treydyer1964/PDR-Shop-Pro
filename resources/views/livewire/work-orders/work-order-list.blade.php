@@ -100,10 +100,12 @@
     @empty
         <div class="rounded-xl border border-dashed border-slate-300 bg-white py-16 text-center">
             <p class="text-sm text-slate-500">No work orders found.</p>
+            @if(auth()->user()->canCreateWorkOrders())
             <a href="{{ route('work-orders.create') }}" wire:navigate
                class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
                 Create Work Order
             </a>
+            @endif
         </div>
     @endforelse
 

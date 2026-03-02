@@ -77,6 +77,42 @@ class User extends Authenticatable
         return $this->hasRole(RoleEnum::OWNER);
     }
 
+    /** Payroll access: Owner and Bookkeeper only (not Sales Manager). */
+    public function canAccessPayroll(): bool
+    {
+        return $this->hasAnyRole([RoleEnum::OWNER, RoleEnum::BOOKKEEPER]);
+    }
+
+    /** Analytics access: Owner, Bookkeeper, and Sales Manager. */
+    public function canAccessAnalytics(): bool
+    {
+        return $this->hasAnyRole([RoleEnum::OWNER, RoleEnum::BOOKKEEPER, RoleEnum::SALES_MANAGER]);
+    }
+
+    /** Can create new work orders: Owner, Bookkeeper, Sales Manager, Sales Advisor. */
+    public function canCreateWorkOrders(): bool
+    {
+        return $this->hasAnyRole([RoleEnum::OWNER, RoleEnum::BOOKKEEPER, RoleEnum::SALES_MANAGER, RoleEnum::SALES_ADVISOR]);
+    }
+
+    /**
+     * Full WO list visibility (all work orders in tenant).
+     * Owner, Bookkeeper, and Sales Manager see everything.
+     */
+    public function canSeeAllWorkOrders(): bool
+    {
+        return $this->hasAnyRole([RoleEnum::OWNER, RoleEnum::BOOKKEEPER, RoleEnum::SALES_MANAGER]);
+    }
+
+    /**
+     * Field staff: roles that only see their assigned work orders.
+     * PDR Tech, R&I Tech, Porter, and Sales Advisor.
+     */
+    public function isFieldStaff(): bool
+    {
+        return $this->hasAnyRole([RoleEnum::PDR_TECH, RoleEnum::RI_TECH, RoleEnum::PORTER, RoleEnum::SALES_ADVISOR]);
+    }
+
     public function getRoleLabels(): string
     {
         return $this->roles->map(fn($r) => $r->label())->implode(', ');

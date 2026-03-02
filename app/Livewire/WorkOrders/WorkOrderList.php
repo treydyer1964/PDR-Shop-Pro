@@ -32,10 +32,15 @@ class WorkOrderList extends Component
     #[Computed]
     public function workOrders()
     {
-        $tenantId = auth()->user()->tenant_id;
+        $user     = auth()->user();
+        $tenantId = $user->tenant_id;
 
         return WorkOrder::forTenant($tenantId)
             ->with(['customer', 'vehicle', 'insuranceCompany'])
+            // Field staff only see work orders they are assigned to
+            ->when(! $user->canSeeAllWorkOrders(), fn($q) =>
+                $q->whereHas('assignments', fn($a) => $a->where('user_id', $user->id))
+            )
             ->when(! $this->showKicked, fn($q) => $q->where('kicked', false))
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterType,   fn($q) => $q->where('job_type', $this->filterType))

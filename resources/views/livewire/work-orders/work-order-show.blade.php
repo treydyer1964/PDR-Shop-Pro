@@ -1,4 +1,5 @@
 <div class="space-y-3">
+@php $authUser = auth()->user(); @endphp
 
     {{-- Flash message --}}
     @if(session('success'))
@@ -548,17 +549,23 @@
                 class="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-slate-50 transition-colors">
             <div class="flex-1 min-w-0">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Expenses & Net</p>
-                <div class="flex items-baseline gap-4 mt-0.5 flex-wrap">
-                    <span class="text-sm text-slate-600">
-                        Invoice: <strong class="text-slate-800">${{ number_format($workOrder->invoice_total ?? 0, 2) }}</strong>
-                    </span>
-                    <span class="text-sm text-slate-600">
-                        Expenses: <strong class="text-slate-700">${{ number_format($this->expenseTotal, 2) }}</strong>
-                    </span>
+                @if($authUser->canAccessFinancials())
+                    <div class="flex items-baseline gap-4 mt-0.5 flex-wrap">
+                        <span class="text-sm text-slate-600">
+                            Invoice: <strong class="text-slate-800">${{ number_format($workOrder->invoice_total ?? 0, 2) }}</strong>
+                        </span>
+                        <span class="text-sm text-slate-600">
+                            Expenses: <strong class="text-slate-700">${{ number_format($this->expenseTotal, 2) }}</strong>
+                        </span>
+                        <span class="text-sm {{ $this->netAmount >= 0 ? 'text-green-700' : 'text-red-600' }}">
+                            Net: <strong>${{ number_format($this->netAmount, 2) }}</strong>
+                        </span>
+                    </div>
+                @else
                     <span class="text-sm {{ $this->netAmount >= 0 ? 'text-green-700' : 'text-red-600' }}">
                         Net: <strong>${{ number_format($this->netAmount, 2) }}</strong>
                     </span>
-                </div>
+                @endif
             </div>
             {!! $chevron !!}
         </button>
@@ -726,7 +733,8 @@
         </div>
     </div>
 
-    {{-- ── 9. Payments & Invoice ───────────────────────────────────────────────── --}}
+    {{-- ── 9. Payments & Invoice (Owner / Bookkeeper / Sales Manager only) ────── --}}
+    @if($authUser->canAccessFinancials())
     <div x-data="{ open: false }" class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <button @click="open = !open"
                 class="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-slate-50 transition-colors">
@@ -767,8 +775,11 @@
             <livewire:work-orders.work-order-payments :work-order="$workOrder" />
         </div>
     </div>
+    @endif
 
     {{-- ── 10. Commissions ────────────────────────────────────────────────────── --}}
+    @if($authUser->canAccessFinancials())
+    {{-- Full commissions view for Owner / Bookkeeper / Sales Manager --}}
     <div x-data="{ open: false }" class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <button @click="open = !open"
                 class="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-slate-50 transition-colors">
@@ -793,6 +804,55 @@
             <livewire:work-orders.work-order-commissions :work-order="$workOrder" />
         </div>
     </div>
+    @elseif($authUser->isFieldStaff())
+    {{-- Limited commission view for field staff: only their own lines --}}
+    @php
+        $myCommissions = $workOrder->commissions()
+            ->where('user_id', $authUser->id)
+            ->get();
+    @endphp
+    @if($myCommissions->isNotEmpty())
+    <div x-data="{ open: false }" class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <button @click="open = !open"
+                class="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-slate-50 transition-colors">
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">My Commission</p>
+                <span class="text-sm font-medium {{ $myCommissions->sum('amount') >= 0 ? 'text-green-700' : 'text-slate-600' }}">
+                    ${{ number_format($myCommissions->sum('amount'), 2) }}
+                    @if($myCommissions->every(fn($c) => $c->is_paid))
+                        <span class="ml-1.5 inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Paid</span>
+                    @elseif($myCommissions->some(fn($c) => $c->is_paid))
+                        <span class="ml-1.5 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Partial</span>
+                    @else
+                        <span class="ml-1.5 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Unpaid</span>
+                    @endif
+                </span>
+            </div>
+            {!! $chevron !!}
+        </button>
+        <div x-show="open" style="display:none" class="border-t border-slate-100 divide-y divide-slate-100">
+            @foreach($myCommissions as $commission)
+            <div class="flex items-center justify-between px-5 py-3">
+                <div>
+                    <p class="text-sm font-medium text-slate-800">${{ number_format($commission->amount, 2) }}</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Net: ${{ number_format($this->netAmount, 2) }}</p>
+                </div>
+                <div class="text-right">
+                    @if($commission->is_paid)
+                        <span class="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Paid</span>
+                        @if($commission->paid_at)
+                            <p class="text-xs text-slate-400 mt-0.5">{{ \Carbon\Carbon::parse($commission->paid_at)->format('M j, Y') }}</p>
+                        @endif
+                    @else
+                        <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Unpaid</span>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+    @endif
 
     {{-- ── 11. Photos ──────────────────────────────────────────────────────────── --}}
     <div x-data="{ open: false }" class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
