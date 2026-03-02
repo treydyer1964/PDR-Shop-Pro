@@ -388,6 +388,14 @@
                         </div>
                     @endif
 
+                    {{-- Referred by --}}
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Referred by</label>
+                        <input wire:model="referred_by" type="text" placeholder="Name of person who referred this job"
+                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        <p class="mt-1 text-xs text-slate-400">Optional — add a Referral Fee expense to track the payout.</p>
+                    </div>
+
                     {{-- Notes --}}
                     <div>
                         <label class="block text-sm font-medium text-slate-700">Notes</label>

@@ -49,6 +49,9 @@
                         </span>
                     @endif
                     <span class="text-xs text-slate-400">· {{ $workOrder->daysInShop() }}d · {{ $workOrder->ro_number }}</span>
+                    @if($workOrder->referred_by)
+                        <span class="text-xs text-slate-400">· Ref: {{ $workOrder->referred_by }}</span>
+                    @endif
                 </div>
             </div>
 

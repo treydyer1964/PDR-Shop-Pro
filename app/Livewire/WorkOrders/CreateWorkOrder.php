@@ -46,8 +46,9 @@ class CreateWorkOrder extends Component
     public string $vPlate     = '';
 
     // Step 4 — Job Details
-    public int $location_id = 0;
-    public string $notes    = '';
+    public int $location_id    = 0;
+    public string $notes       = '';
+    public string $referred_by = '';
     // Insurance-specific
     public ?int  $insurance_company_id  = null;
     public string $claim_number         = '';
@@ -274,6 +275,7 @@ class CreateWorkOrder extends Component
             'job_type'                 => $this->job_type,
             'status'                   => WorkOrderStatus::ToBeAcquired->value,
             'notes'                    => $this->notes ?: null,
+            'referred_by'              => $this->referred_by ?: null,
             'insurance_company_id'     => $this->isInsurance ? ($this->insurance_company_id ?: null) : null,
             'claim_number'             => $this->isInsurance ? ($this->claim_number ?: null)  : null,
             'policy_number'            => $this->isInsurance ? ($this->policy_number ?: null) : null,

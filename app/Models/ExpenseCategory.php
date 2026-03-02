@@ -34,7 +34,8 @@ class ExpenseCategory extends Model
     const SLUG_GLASS      = 'glass';
     const SLUG_MISC       = 'misc';
     const SLUG_ADMIN_FEE  = 'admin_fee';
-    const SLUG_PORTER_FEE = 'porter_fee';
+    const SLUG_PORTER_FEE    = 'porter_fee';
+    const SLUG_REFERRAL_FEE  = 'referral_fee';
 
     // ── Standard categories (seeded per tenant) ────────────────────────────────
 
@@ -50,7 +51,8 @@ class ExpenseCategory extends Model
             ['name' => 'Glass',      'slug' => self::SLUG_GLASS,      'sort_order' => 7],
             ['name' => 'Misc',       'slug' => self::SLUG_MISC,       'sort_order' => 8],
             ['name' => 'Admin Fee',  'slug' => self::SLUG_ADMIN_FEE,  'sort_order' => 9],
-            ['name' => 'Porter Fee', 'slug' => self::SLUG_PORTER_FEE, 'sort_order' => 10],
+            ['name' => 'Porter Fee',   'slug' => self::SLUG_PORTER_FEE,   'sort_order' => 10],
+            ['name' => 'Referral Fee', 'slug' => self::SLUG_REFERRAL_FEE, 'sort_order' => 11],
         ];
     }
 

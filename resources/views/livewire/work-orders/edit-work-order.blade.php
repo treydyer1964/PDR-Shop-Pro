@@ -33,6 +33,13 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-slate-700">Referred by</label>
+                    <input wire:model="referred_by" type="text" placeholder="Name of person who referred this job"
+                           class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    @error('referred_by') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-slate-700">Notes</label>
                     <textarea wire:model="notes" rows="3"
                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>

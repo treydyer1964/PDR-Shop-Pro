@@ -28,6 +28,7 @@ class WorkOrder extends Model
         'closed_at',
         'closed_by',
         'notes',
+        'referred_by',
         // Insurance
         'insurance_company_id',
         'claim_number',

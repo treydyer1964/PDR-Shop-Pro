@@ -15,6 +15,7 @@ class EditWorkOrder extends Component
 
     public int    $location_id      = 0;
     public string $notes            = '';
+    public string $referred_by      = '';
     public string $invoice_total    = '';
 
     // Insurance fields
@@ -36,6 +37,7 @@ class EditWorkOrder extends Component
 
         $this->location_id             = $workOrder->location_id;
         $this->notes                   = $workOrder->notes ?? '';
+        $this->referred_by             = $workOrder->referred_by ?? '';
         $this->invoice_total           = $workOrder->invoice_total ?? '';
         $this->insurance_company_id    = $workOrder->insurance_company_id;
         $this->claim_number            = $workOrder->claim_number ?? '';
@@ -74,6 +76,7 @@ class EditWorkOrder extends Component
         $rules = [
             'location_id'   => 'required|integer',
             'notes'         => 'nullable|string|max:5000',
+            'referred_by'   => 'nullable|string|max:100',
             'invoice_total' => 'nullable|numeric|min:0',
         ];
 
@@ -94,6 +97,7 @@ class EditWorkOrder extends Component
         $data = [
             'location_id'   => $this->location_id,
             'notes'         => $this->notes ?: null,
+            'referred_by'   => $this->referred_by ?: null,
             'invoice_total' => $this->invoice_total !== '' ? $this->invoice_total : null,
         ];
 
