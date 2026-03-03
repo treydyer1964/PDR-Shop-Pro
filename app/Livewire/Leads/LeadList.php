@@ -59,7 +59,7 @@ class LeadList extends Component
     public function reps()
     {
         return User::where('tenant_id', auth()->user()->tenant_id)
-            ->whereIn('role', ['owner', 'sales_manager', 'sales_advisor'])
+            ->whereHas('roles', fn($q) => $q->whereIn('name', ['owner', 'sales_manager', 'sales_advisor']))
             ->orderBy('name')
             ->get(['id', 'name']);
     }

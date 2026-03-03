@@ -60,7 +60,8 @@ class LeadForm extends Component
         } else {
             // Default assignee to current user if they're a rep
             $user = auth()->user();
-            if ($user->isFieldStaff() || $user->role === 'sales_manager') {
+            if (! $user->canAccessAnalytics()) {
+                // Default assignee to self for reps (advisors; managers/owners usually assign manually)
                 $this->assigned_to = (string) $user->id;
             }
         }
@@ -70,7 +71,7 @@ class LeadForm extends Component
     public function reps()
     {
         return User::where('tenant_id', auth()->user()->tenant_id)
-            ->whereIn('role', ['owner', 'sales_manager', 'sales_advisor'])
+            ->whereHas('roles', fn($q) => $q->whereIn('name', ['owner', 'sales_manager', 'sales_advisor']))
             ->orderBy('name')
             ->get(['id', 'name']);
     }
