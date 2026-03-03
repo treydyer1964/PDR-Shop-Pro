@@ -13,10 +13,11 @@ class EditWorkOrder extends Component
 {
     public WorkOrder $workOrder;
 
-    public int    $location_id      = 0;
-    public string $notes            = '';
-    public string $referred_by      = '';
-    public string $invoice_total    = '';
+    public int    $location_id             = 0;
+    public string $notes                   = '';
+    public string $referred_by             = '';
+    public string $invoice_total           = '';
+    public string $expected_delivery_date  = '';
 
     // Insurance fields
     public ?int  $insurance_company_id   = null;
@@ -39,6 +40,7 @@ class EditWorkOrder extends Component
         $this->notes                   = $workOrder->notes ?? '';
         $this->referred_by             = $workOrder->referred_by ?? '';
         $this->invoice_total           = $workOrder->invoice_total ?? '';
+        $this->expected_delivery_date  = $workOrder->expected_delivery_date?->format('Y-m-d') ?? '';
         $this->insurance_company_id    = $workOrder->insurance_company_id;
         $this->claim_number            = $workOrder->claim_number ?? '';
         $this->policy_number           = $workOrder->policy_number ?? '';
@@ -75,9 +77,10 @@ class EditWorkOrder extends Component
     {
         $rules = [
             'location_id'   => 'required|integer',
-            'notes'         => 'nullable|string|max:5000',
-            'referred_by'   => 'nullable|string|max:100',
-            'invoice_total' => 'nullable|numeric|min:0',
+            'notes'                  => 'nullable|string|max:5000',
+            'referred_by'            => 'nullable|string|max:100',
+            'invoice_total'          => 'nullable|numeric|min:0',
+            'expected_delivery_date' => 'nullable|date',
         ];
 
         if ($this->isInsurance) {
@@ -96,9 +99,10 @@ class EditWorkOrder extends Component
 
         $data = [
             'location_id'   => $this->location_id,
-            'notes'         => $this->notes ?: null,
-            'referred_by'   => $this->referred_by ?: null,
-            'invoice_total' => $this->invoice_total !== '' ? $this->invoice_total : null,
+            'notes'                  => $this->notes ?: null,
+            'referred_by'            => $this->referred_by ?: null,
+            'invoice_total'          => $this->invoice_total !== '' ? $this->invoice_total : null,
+            'expected_delivery_date' => $this->expected_delivery_date ?: null,
         ];
 
         if ($this->isInsurance) {

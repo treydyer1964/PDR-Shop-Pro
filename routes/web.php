@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\StormEventController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\DashboardController;
@@ -63,6 +64,12 @@ Route::middleware(['auth'])->group(function () {
     // ── Operations (all auth users) ───────────────────────────────────────────
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/rentals',      [RentalController::class, 'index'])->name('rentals.index');
+
+    // ── Storm Events: Owner, Bookkeeper, Sales Manager ────────────────────────
+    Route::middleware('role:owner,bookkeeper,sales_manager')->group(function () {
+        Route::get('/storm-events',          [StormEventController::class, 'index'])->name('storm-events.index');
+        Route::get('/storm-events/{stormEvent}', [StormEventController::class, 'show'])->name('storm-events.show');
+    });
 
     // ── Analytics: Owner, Bookkeeper, Sales Manager ───────────────────────────
     Route::middleware('role:owner,bookkeeper,sales_manager')->group(function () {

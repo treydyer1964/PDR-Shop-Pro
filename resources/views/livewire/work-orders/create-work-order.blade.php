@@ -418,6 +418,21 @@
                         <p class="mt-1 text-xs text-slate-400">Optional — add a Referral Fee expense to track the payout.</p>
                     </div>
 
+                    {{-- Storm event --}}
+                    @if($this->stormEvents->isNotEmpty())
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Storm Event</label>
+                            <select wire:model="storm_event_id"
+                                    class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="">— None —</option>
+                                @foreach($this->stormEvents as $storm)
+                                    <option value="{{ $storm->id }}">{{ $storm->name }} ({{ $storm->event_date->format('M Y') }})</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-slate-400">Optional — tag this job to a storm event for grouped reporting.</p>
+                        </div>
+                    @endif
+
                     {{-- Notes --}}
                     <div>
                         <label class="block text-sm font-medium text-slate-700">Notes</label>

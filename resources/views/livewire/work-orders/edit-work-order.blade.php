@@ -40,6 +40,14 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-slate-700">Expected Delivery Date</label>
+                    <input wire:model="expected_delivery_date" type="date"
+                           class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    <p class="mt-1 text-xs text-slate-400">Shows on the production calendar.</p>
+                    @error('expected_delivery_date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-slate-700">Notes</label>
                     <textarea wire:model="notes" rows="3"
                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>

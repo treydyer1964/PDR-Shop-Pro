@@ -49,9 +49,10 @@ class CreateWorkOrder extends Component
     public string $vPlate     = '';
 
     // Step 4 — Job Details
-    public int $location_id    = 0;
-    public string $notes       = '';
-    public string $referred_by = '';
+    public int $location_id      = 0;
+    public string $notes         = '';
+    public string $referred_by   = '';
+    public ?int $storm_event_id  = null;
     // Insurance-specific
     public ?int  $insurance_company_id  = null;
     public string $claim_number         = '';
@@ -127,6 +128,14 @@ class CreateWorkOrder extends Component
     public function insuranceCompanies()
     {
         return InsuranceCompany::active()->orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function stormEvents()
+    {
+        return \App\Models\StormEvent::forTenant(auth()->user()->tenant_id)
+            ->orderByDesc('event_date')
+            ->get();
     }
 
     #[Computed]
@@ -285,6 +294,7 @@ class CreateWorkOrder extends Component
             'status'                   => WorkOrderStatus::ToBeAcquired->value,
             'notes'                    => $this->notes ?: null,
             'referred_by'              => $this->referred_by ?: null,
+            'storm_event_id'           => $this->storm_event_id ?: null,
             'insurance_company_id'     => $this->isInsurance ? ($this->insurance_company_id ?: null) : null,
             'claim_number'             => $this->isInsurance ? ($this->claim_number ?: null)  : null,
             'policy_number'            => $this->isInsurance ? ($this->policy_number ?: null) : null,

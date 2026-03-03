@@ -29,6 +29,8 @@ class WorkOrder extends Model
         'closed_by',
         'notes',
         'referred_by',
+        'storm_event_id',
+        'expected_delivery_date',
         // Insurance
         'insurance_company_id',
         'claim_number',
@@ -68,6 +70,7 @@ class WorkOrder extends Model
         'status'                      => WorkOrderStatus::class,
         'invoice_total'               => 'decimal:2',
         'invoice_date'                => 'date',
+        'expected_delivery_date'      => 'date',
         'commissions_locked_at'       => 'datetime',
         'is_closed'                   => 'boolean',
         'closed_at'                   => 'datetime',
@@ -113,6 +116,11 @@ class WorkOrder extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function stormEvent(): BelongsTo
+    {
+        return $this->belongsTo(StormEvent::class);
     }
 
     public function insuranceCompany(): BelongsTo

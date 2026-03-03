@@ -40,6 +40,7 @@ class WorkOrderController extends Controller
             'customer',
             'vehicle',
             'insuranceCompany',
+            'stormEvent',
             'statusLogs.user',
             'events.user',
             'assignments.user',

@@ -4,6 +4,7 @@ namespace App\Livewire\WorkOrders;
 
 use App\Enums\WorkOrderJobType;
 use App\Enums\WorkOrderStatus;
+use App\Models\StormEvent;
 use App\Models\WorkOrder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -23,11 +24,15 @@ class WorkOrderList extends Component
     #[Url(as: 'type')]
     public string $filterType = '';
 
+    #[Url(as: 'storm')]
+    public string $filterStorm = '';
+
     public bool $showKicked = false;
 
-    public function updatedSearch(): void    { $this->resetPage(); }
-    public function updatedFilterStatus(): void { $this->resetPage(); }
-    public function updatedFilterType(): void   { $this->resetPage(); }
+    public function updatedSearch(): void        { $this->resetPage(); }
+    public function updatedFilterStatus(): void  { $this->resetPage(); }
+    public function updatedFilterType(): void    { $this->resetPage(); }
+    public function updatedFilterStorm(): void   { $this->resetPage(); }
 
     #[Computed]
     public function workOrders()
@@ -44,6 +49,7 @@ class WorkOrderList extends Component
             ->when(! $this->showKicked, fn($q) => $q->where('kicked', false))
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterType,   fn($q) => $q->where('job_type', $this->filterType))
+            ->when($this->filterStorm,  fn($q) => $q->where('storm_event_id', $this->filterStorm))
             ->when($this->search, function ($q) {
                 $q->where(function ($q) {
                     $q->where('ro_number',    'like', "%{$this->search}%")
@@ -73,6 +79,14 @@ class WorkOrderList extends Component
     public function jobTypes(): array
     {
         return WorkOrderJobType::cases();
+    }
+
+    #[Computed]
+    public function stormEvents()
+    {
+        return StormEvent::forTenant(auth()->user()->tenant_id)
+            ->orderByDesc('event_date')
+            ->get();
     }
 
     public function render()

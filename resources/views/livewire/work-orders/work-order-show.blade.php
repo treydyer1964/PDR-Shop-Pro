@@ -53,6 +53,23 @@
                     @if($workOrder->referred_by)
                         <span class="text-xs text-slate-400">· Ref: {{ $workOrder->referred_by }}</span>
                     @endif
+                    @if($workOrder->expected_delivery_date)
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
+                            </svg>
+                            Est. {{ $workOrder->expected_delivery_date->format('M j') }}
+                        </span>
+                    @endif
+                    @if($workOrder->stormEvent)
+                        <a href="{{ route('storm-events.show', $workOrder->stormEvent) }}" wire:navigate
+                           class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-colors">
+                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+                            </svg>
+                            {{ $workOrder->stormEvent->name }}
+                        </a>
+                    @endif
                 </div>
             </div>
 

@@ -65,6 +65,9 @@
             @if(!auth()->user()?->isFieldStaff())
             <x-nav-item route="rentals.index" icon="key">Rentals</x-nav-item>
             <x-nav-item route="staff.index" icon="user-group">Staff</x-nav-item>
+            @if(auth()->user()?->canAccessAnalytics())
+            <x-nav-item route="storm-events.index" icon="cloud">Storms</x-nav-item>
+            @endif
             @endif
 
             @if(auth()->user()?->canAccessAnalytics())

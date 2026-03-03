@@ -29,6 +29,16 @@
                 @endforeach
             </select>
 
+            @if($this->stormEvents->isNotEmpty())
+                <select wire:model.live="filterStorm"
+                        class="rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">All Storms</option>
+                    @foreach($this->stormEvents as $storm)
+                        <option value="{{ $storm->id }}">{{ $storm->name }}</option>
+                    @endforeach
+                </select>
+            @endif
+
             <label class="flex items-center gap-1.5 text-sm text-slate-500 cursor-pointer">
                 <input wire:model.live="showKicked" type="checkbox" class="rounded border-slate-300 text-blue-600" />
                 Show Kicked
