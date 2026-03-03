@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\StormEventController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CommissionController;
@@ -64,6 +65,14 @@ Route::middleware(['auth'])->group(function () {
     // ── Operations (all auth users) ───────────────────────────────────────────
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/rentals',      [RentalController::class, 'index'])->name('rentals.index');
+
+    // ── Leads: all roles except field techs/porters ───────────────────────────
+    Route::prefix('leads')->name('leads.')->group(function () {
+        Route::get('/',           [LeadController::class, 'index'])->name('index');
+        Route::get('/create',     [LeadController::class, 'create'])->name('create');
+        Route::get('/{lead}',     [LeadController::class, 'show'])->name('show');
+        Route::get('/{lead}/edit', [LeadController::class, 'edit'])->name('edit');
+    });
 
     // ── Storm Events: Owner, Bookkeeper, Sales Manager ────────────────────────
     Route::middleware('role:owner,bookkeeper,sales_manager')->group(function () {

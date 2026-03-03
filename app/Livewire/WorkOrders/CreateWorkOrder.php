@@ -6,6 +6,7 @@ use App\Enums\WorkOrderJobType;
 use App\Enums\WorkOrderStatus;
 use App\Models\Customer;
 use App\Models\InsuranceCompany;
+use App\Models\Lead;
 use App\Models\Location;
 use App\Models\Vehicle;
 use App\Models\VehicleColor;
@@ -48,6 +49,9 @@ class CreateWorkOrder extends Component
     public string $vColor     = '';
     public string $vPlate     = '';
 
+    // Lead conversion context (optional — set when arriving from lead show page)
+    public ?int $fromLeadId = null;
+
     // Step 4 — Job Details
     public int $location_id      = 0;
     public string $notes         = '';
@@ -63,6 +67,31 @@ class CreateWorkOrder extends Component
     public string $deductible           = '';
     public bool  $insurance_pre_inspected = false;
     public bool  $has_rental_coverage   = false;
+
+    // ── Lifecycle ──────────────────────────────────────────────────────────────
+
+    public function mount(): void
+    {
+        // Pre-fill customer when arriving from lead conversion
+        if ($customerId = request()->query('customer_id')) {
+            $customer = Customer::where('id', $customerId)
+                ->where('tenant_id', auth()->user()->tenant_id)
+                ->first();
+            if ($customer) {
+                $this->customer_id = $customer->id;
+                $this->step = 2; // jump past job type if customer is known? Keep on step 1 for job type
+            }
+        }
+
+        if ($leadId = request()->query('lead_id')) {
+            $lead = Lead::where('id', $leadId)
+                ->where('tenant_id', auth()->user()->tenant_id)
+                ->first();
+            if ($lead) {
+                $this->fromLeadId = $lead->id;
+            }
+        }
+    }
 
     // ── Computed ───────────────────────────────────────────────────────────────
 
@@ -314,6 +343,13 @@ class CreateWorkOrder extends Component
             'status'        => WorkOrderStatus::ToBeAcquired->value,
             'entered_at'    => now(),
         ]);
+
+        // Link back to lead if this WO was created from a lead conversion
+        if ($this->fromLeadId) {
+            Lead::where('id', $this->fromLeadId)
+                ->where('tenant_id', $tenantId)
+                ->update(['converted_work_order_id' => $wo->id]);
+        }
 
         session()->flash('success', "Work order {$roNumber} created.");
         $this->redirect(route('work-orders.show', $wo), navigate: true);

@@ -69,6 +69,9 @@
             <x-nav-item route="storm-events.index" icon="cloud">Storms</x-nav-item>
             @endif
             @endif
+            @if(!in_array(auth()->user()?->role ?? '', ['pdr_tech', 'ri_tech', 'porter']))
+            <x-nav-item route="leads.index" icon="map-pin">Leads</x-nav-item>
+            @endif
 
             @if(auth()->user()?->canAccessAnalytics())
             <div class="pt-4 pb-1 px-2">
