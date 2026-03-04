@@ -39,11 +39,31 @@
         </div>
 
         {{-- Address (with GPS button) --}}
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm"
+             x-data="{ gpsLoading: false, gpsError: '' }"
+             x-init="
+                @if($lat && $lng && !$address)
+                    $nextTick(async () => {
+                        gpsLoading = true;
+                        try {
+                            const r = await fetch('https://nominatim.openstreetmap.org/reverse?lat={{ $lat }}&lon={{ $lng }}&format=json');
+                            const d = await r.json();
+                            const addr = d.address || {};
+                            const streetNum = addr.house_number ?? '';
+                            const street    = addr.road ?? '';
+                            $wire.set('address', (streetNum + ' ' + street).trim());
+                            $wire.set('city',    addr.city ?? addr.town ?? addr.village ?? '');
+                            $wire.set('state',   (addr.state_code ?? addr.ISO3166_2_lvl4 ?? '').replace(/^US-/, '').substring(0, 2).toUpperCase());
+                            $wire.set('zip',     addr.postcode ?? '');
+                        } catch(e) {}
+                        gpsLoading = false;
+                    });
+                @endif
+             ">
             <div class="border-b border-slate-100 px-5 py-3 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-slate-700">Address</h3>
-                {{-- GPS capture button — pure Alpine.js, no npm deps --}}
-                <div x-data="{ gpsLoading: false, gpsError: '' }">
+                {{-- GPS capture button --}}
+                <div>
                     <button type="button"
                             @click="
                                 gpsError = '';
@@ -88,6 +108,14 @@
                 </div>
             </div>
             <div class="p-5 space-y-4">
+
+                @if($lat && $lng)
+                    <p class="text-xs text-blue-600 flex items-center gap-1">
+                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        Location pinned from map ({{ $lat }}, {{ $lng }})
+                        <span x-show="gpsLoading" class="text-slate-400">— looking up address…</span>
+                    </p>
+                @endif
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Street Address</label>
@@ -197,6 +225,21 @@
                         </select>
                     </div>
                     @endif
+                </div>
+                @endif
+
+                @if($this->stormEvents->isNotEmpty())
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Storm / Event</label>
+                    <select wire:model="storm_event_id"
+                            class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">None</option>
+                        @foreach($this->stormEvents as $storm)
+                            <option value="{{ $storm->id }}">
+                                {{ $storm->name }}{{ $storm->city ? ' — ' . $storm->city . ($storm->state ? ', ' . $storm->state : '') : '' }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
                 @endif
 

@@ -84,6 +84,22 @@
                     <p class="text-sm text-slate-600 whitespace-pre-line">{{ $lead->notes }}</p>
                 </div>
                 @endif
+
+                @if($lead->stormEvent)
+                <div class="border-t border-slate-100 pt-3 flex items-center gap-2">
+                    <svg class="h-4 w-4 text-sky-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+                    </svg>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wide">Storm / Event</p>
+                        <a href="{{ route('storm-events.show', $lead->stormEvent) }}" wire:navigate
+                           class="text-sm font-medium text-sky-600 hover:underline">{{ $lead->stormEvent->name }}</a>
+                        @if($lead->stormEvent->locationLabel())
+                            <span class="text-xs text-slate-400 ml-1">{{ $lead->stormEvent->locationLabel() }}</span>
+                        @endif
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
 

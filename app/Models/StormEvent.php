@@ -43,6 +43,11 @@ class StormEvent extends Model
         return $this->hasMany(WorkOrder::class);
     }
 
+    public function leads(): HasMany
+    {
+        return $this->hasMany(Lead::class);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────────
 
     public function locationLabel(): string

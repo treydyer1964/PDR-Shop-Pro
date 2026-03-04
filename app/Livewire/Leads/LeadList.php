@@ -5,6 +5,7 @@ namespace App\Livewire\Leads;
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
+use App\Models\StormEvent;
 use App\Models\User;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -21,11 +22,15 @@ class LeadList extends Component
     #[Url(as: 'rep')]
     public string $filterRep = '';
 
+    #[Url(as: 'storm')]
+    public string $filterStorm = '';
+
     #[Url(as: 'q')]
     public string $search = '';
 
     public function updatedFilterStatus(): void { $this->resetPage(); }
     public function updatedFilterRep(): void    { $this->resetPage(); }
+    public function updatedFilterStorm(): void  { $this->resetPage(); }
     public function updatedSearch(): void       { $this->resetPage(); }
 
     #[Computed]
@@ -35,10 +40,11 @@ class LeadList extends Component
         $tenantId = $user->tenant_id;
 
         $query = Lead::forTenant($tenantId)
-            ->with(['assignedUser', 'territory'])
+            ->with(['assignedUser', 'territory', 'stormEvent'])
             ->withCount(['followUps as pending_follow_ups_count' => fn($q) => $q->whereNull('completed_at')])
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterRep,    fn($q) => $q->where('assigned_to', $this->filterRep))
+            ->when($this->filterStorm,  fn($q) => $q->where('storm_event_id', $this->filterStorm))
             ->when($this->search,       fn($q) => $q->where(function($q2) {
                 $q2->where('first_name', 'like', "%{$this->search}%")
                    ->orWhere('last_name',  'like', "%{$this->search}%")
@@ -62,6 +68,14 @@ class LeadList extends Component
             ->whereHas('roles', fn($q) => $q->whereIn('name', ['owner', 'sales_manager', 'sales_advisor']))
             ->orderBy('name')
             ->get(['id', 'name']);
+    }
+
+    #[Computed]
+    public function stormEvents()
+    {
+        return StormEvent::forTenant(auth()->user()->tenant_id)
+            ->orderByDesc('event_date')
+            ->get(['id', 'name', 'city', 'state', 'event_date']);
     }
 
     #[Computed]

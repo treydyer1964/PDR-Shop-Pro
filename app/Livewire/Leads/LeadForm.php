@@ -5,6 +5,7 @@ namespace App\Livewire\Leads;
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
+use App\Models\StormEvent;
 use App\Models\Territory;
 use App\Models\User;
 use Livewire\Attributes\Computed;
@@ -33,6 +34,7 @@ class LeadForm extends Component
     public string $notes             = '';
     public string $assigned_to       = '';
     public string $territory_id      = '';
+    public string $storm_event_id    = '';
 
     public function mount(?Lead $lead = null): void
     {
@@ -55,14 +57,22 @@ class LeadForm extends Component
             $this->vehicle_make  = $lead->vehicle_make ?? '';
             $this->vehicle_model = $lead->vehicle_model ?? '';
             $this->notes         = $lead->notes ?? '';
-            $this->assigned_to   = $lead->assigned_to ? (string) $lead->assigned_to : '';
-            $this->territory_id  = $lead->territory_id ? (string) $lead->territory_id : '';
+            $this->assigned_to     = $lead->assigned_to ? (string) $lead->assigned_to : '';
+            $this->territory_id    = $lead->territory_id ? (string) $lead->territory_id : '';
+            $this->storm_event_id  = $lead->storm_event_id ? (string) $lead->storm_event_id : '';
         } else {
             // Default assignee to current user if they're a rep
             $user = auth()->user();
             if (! $user->canAccessAnalytics()) {
-                // Default assignee to self for reps (advisors; managers/owners usually assign manually)
                 $this->assigned_to = (string) $user->id;
+            }
+
+            // Pre-fill lat/lng from map click (?lat=X&lng=Y)
+            if (request()->filled('lat')) {
+                $this->lat = (string) request()->query('lat');
+            }
+            if (request()->filled('lng')) {
+                $this->lng = (string) request()->query('lng');
             }
         }
     }
@@ -83,6 +93,14 @@ class LeadForm extends Component
             ->where('active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'color']);
+    }
+
+    #[Computed]
+    public function stormEvents()
+    {
+        return StormEvent::forTenant(auth()->user()->tenant_id)
+            ->orderByDesc('event_date')
+            ->get(['id', 'name', 'city', 'state']);
     }
 
     #[Computed]
@@ -119,6 +137,7 @@ class LeadForm extends Component
             'notes'             => 'nullable|string',
             'assigned_to'       => 'nullable|integer',
             'territory_id'      => 'nullable|integer',
+            'storm_event_id'    => 'nullable|integer',
         ]);
 
         $user = auth()->user();
@@ -143,6 +162,7 @@ class LeadForm extends Component
             'notes'              => $this->notes ?: null,
             'assigned_to'        => $this->assigned_to ?: null,
             'territory_id'       => $this->territory_id ?: null,
+            'storm_event_id'     => $this->storm_event_id ?: null,
         ];
 
         if ($this->lead && $this->lead->exists) {

@@ -1,6 +1,25 @@
 <div>
-    {{-- Status filter strip + map --}}
+    {{-- Storm filter (Livewire, triggers re-render) --}}
+    @if($this->stormEvents->isNotEmpty())
+    <div class="mb-3 flex items-center gap-2">
+        <svg class="h-4 w-4 shrink-0 text-sky-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+        </svg>
+        <select wire:model.live="filterStorm"
+                class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <option value="">All Storm Events</option>
+            @foreach($this->stormEvents as $storm)
+                <option value="{{ $storm->id }}">
+                    {{ $storm->name }}{{ $storm->city ? ' — ' . $storm->city . ($storm->state ? ', ' . $storm->state : '') : '' }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+    @endif
+
+    {{-- Status filter strip + map (wire:key forces Leaflet reinit when storm filter changes) --}}
     <div
+        wire:key="lead-map-{{ $this->filterStorm }}"
         x-data="{ filter: '' }"
         data-leads="{{ json_encode($this->allLeads) }}"
         data-territories="{{ json_encode($this->territories) }}"
@@ -32,11 +51,15 @@
             <div id="lead-map-container" class="h-full w-full"></div>
         </div>
 
-        {{-- Lead count --}}
+        {{-- Lead count + tap hint --}}
         <p class="mt-2 text-xs text-slate-400">
             <span x-text="window.leadMapCount ? window.leadMapCount(filter) : ''"></span>
             @if($this->unlocatedLeads->isNotEmpty())
                 · {{ $this->unlocatedLeads->count() }} without location (listed below)
+            @endif
+            @if(auth()->user()->canCreateWorkOrders())
+                <span class="ml-2 text-slate-300">·</span>
+                <span class="ml-2 text-blue-500">Tap anywhere on the map to create a new lead at that location</span>
             @endif
         </p>
     </div>

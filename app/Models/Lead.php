@@ -15,7 +15,7 @@ class Lead extends Model
         'address', 'city', 'state', 'zip', 'lat', 'lng',
         'status', 'source', 'job_type_interest',
         'vehicle_year', 'vehicle_make', 'vehicle_model',
-        'notes', 'assigned_to', 'territory_id',
+        'notes', 'assigned_to', 'territory_id', 'storm_event_id',
         'converted_work_order_id', 'converted_at', 'created_by',
     ];
 
@@ -40,6 +40,11 @@ class Lead extends Model
     public function territory(): BelongsTo
     {
         return $this->belongsTo(Territory::class);
+    }
+
+    public function stormEvent(): BelongsTo
+    {
+        return $this->belongsTo(StormEvent::class);
     }
 
     public function convertedWorkOrder(): BelongsTo

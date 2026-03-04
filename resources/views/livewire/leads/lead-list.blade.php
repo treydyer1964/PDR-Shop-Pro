@@ -22,6 +22,18 @@
             @endforeach
         </select>
         @endif
+
+        @if($this->stormEvents->isNotEmpty())
+        <select wire:model.live="filterStorm"
+                class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <option value="">All Events</option>
+            @foreach($this->stormEvents as $storm)
+                <option value="{{ $storm->id }}">
+                    {{ $storm->name }}{{ $storm->city ? ' — ' . $storm->city . ($storm->state ? ', ' . $storm->state : '') : '' }}
+                </option>
+            @endforeach
+        </select>
+        @endif
     </div>
 
     {{-- Lead cards --}}
@@ -53,6 +65,12 @@
                 </div>
 
                 <div class="mt-1.5 flex flex-wrap gap-3 text-xs text-slate-400">
+                    @if($lead->stormEvent)
+                        <span class="inline-flex items-center gap-1 text-sky-600 font-medium">
+                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" /></svg>
+                            {{ $lead->stormEvent->name }}
+                        </span>
+                    @endif
                     @if($lead->assignedUser)
                         <span>Rep: {{ $lead->assignedUser->name }}</span>
                     @endif

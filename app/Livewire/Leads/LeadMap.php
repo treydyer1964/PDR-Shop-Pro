@@ -4,12 +4,25 @@ namespace App\Livewire\Leads;
 
 use App\Enums\LeadStatus;
 use App\Models\Lead;
+use App\Models\StormEvent;
 use App\Models\Territory;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class LeadMap extends Component
 {
+    #[Url(as: 'storm')]
+    public string $filterStorm = '';
+
+    #[Computed]
+    public function stormEvents()
+    {
+        return StormEvent::forTenant(auth()->user()->tenant_id)
+            ->orderByDesc('event_date')
+            ->get(['id', 'name', 'city', 'state']);
+    }
+
     #[Computed]
     public function allLeads(): array
     {
@@ -19,7 +32,8 @@ class LeadMap extends Component
         $query = Lead::forTenant($tenantId)
             ->with(['assignedUser'])
             ->whereNotNull('lat')
-            ->whereNotNull('lng');
+            ->whereNotNull('lng')
+            ->when($this->filterStorm, fn($q) => $q->where('storm_event_id', $this->filterStorm));
 
         if ($user->isFieldStaff()) {
             $query->where('assigned_to', $user->id);
@@ -48,7 +62,8 @@ class LeadMap extends Component
 
         $query = Lead::forTenant($tenantId)
             ->with(['assignedUser'])
-            ->where(fn($q) => $q->whereNull('lat')->orWhereNull('lng'));
+            ->where(fn($q) => $q->whereNull('lat')->orWhereNull('lng'))
+            ->when($this->filterStorm, fn($q) => $q->where('storm_event_id', $this->filterStorm));
 
         if ($user->isFieldStaff()) {
             $query->where('assigned_to', $user->id);

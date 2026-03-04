@@ -26,7 +26,7 @@ class LeadController extends Controller
             abort_unless($lead->assigned_to === $user->id, 403);
         }
 
-        $lead->load(['assignedUser', 'territory', 'convertedWorkOrder.customer', 'creator']);
+        $lead->load(['assignedUser', 'territory', 'stormEvent', 'convertedWorkOrder.customer', 'creator']);
         return view('leads.show', compact('lead'));
     }
 

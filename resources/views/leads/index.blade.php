@@ -73,6 +73,17 @@
                 map.setView([32.45, -99.73], 12);
             }
 
+            // Tap/click on map to create a new lead at that location
+            map.on('click', function (e) {
+                var lat = e.latlng.lat.toFixed(6);
+                var lng = e.latlng.lng.toFixed(6);
+                window.location.href = '/leads/create?lat=' + lat + '&lng=' + lng;
+            });
+
+            // Change cursor to crosshair to hint that the map is clickable
+            var container = map.getContainer();
+            container.style.cursor = 'crosshair';
+
             window.leadMapSetFilter = function (val) { renderMarkers(val); };
             window.leadMapCount = function (filter) {
                 var n = filter ? leads.filter(function (l) { return l.status === filter; }).length : leads.length;
@@ -112,7 +123,7 @@
             </a>
         </div>
 
-        @if(auth()->user()->canCreateWorkOrders() && ! request()->query('mapview'))
+        @if(auth()->user()->canCreateWorkOrders())
             <a href="{{ route('leads.create') }}" wire:navigate
                class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
