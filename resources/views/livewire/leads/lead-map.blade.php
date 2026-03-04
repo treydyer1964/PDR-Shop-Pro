@@ -1,102 +1,23 @@
 <div>
-    {{-- Status filter strip --}}
+    {{-- Status filter strip + map --}}
     <div
-        x-data="{
-            leads: {{ Js::from($this->allLeads) }},
-            territories: {{ Js::from($this->territories) }},
-            map: null,
-            markers: [],
-            filter: '',
-
-            init() {
-                this.$nextTick(() => { this.initMap(); });
-            },
-
-            initMap() {
-                this.map = L.map('lead-map-container');
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '\u00a9 <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors',
-                    maxZoom: 19
-                }).addTo(this.map);
-
-                this.territories.forEach(t => {
-                    if (!t.boundary) return;
-                    try {
-                        L.geoJSON(t.boundary, {
-                            style: {
-                                color: t.color || '#3b82f6',
-                                fillColor: t.color || '#3b82f6',
-                                fillOpacity: 0.08,
-                                weight: 2
-                            }
-                        }).bindTooltip(
-                            '<strong>' + t.name + '</strong>' + (t.rep ? '<br>' + t.rep : ''),
-                            { sticky: true }
-                        ).addTo(this.map);
-                    } catch(e) {}
-                });
-
-                this.renderMarkers();
-
-                if (this.leads.length > 0) {
-                    const bounds = this.leads.map(l => [l.lat, l.lng]);
-                    this.map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] });
-                } else {
-                    this.map.setView([32.45, -99.73], 12);
-                }
-            },
-
-            setFilter(val) {
-                this.filter = val;
-                this.renderMarkers();
-            },
-
-            makePopup(lead) {
-                let html = '<div style=\"min-width:150px\">';
-                html += '<div style=\"font-weight:600;margin-bottom:2px\">' + lead.name + '</div>';
-                html += '<div style=\"color:#64748b;font-size:12px;margin-bottom:4px\">' + lead.statusLabel + '</div>';
-                if (lead.phone) html += '<div style=\"font-size:12px\">' + lead.phone + '</div>';
-                if (lead.address) html += '<div style=\"font-size:11px;color:#94a3b8\">' + lead.address + '</div>';
-                if (lead.rep) html += '<div style=\"font-size:12px;margin-top:2px\">Rep: ' + lead.rep + '</div>';
-                html += '<a href=\"' + lead.url + '\" style=\"display:inline-block;margin-top:6px;font-size:12px;color:#2563eb\">View Lead &#x2192;</a>';
-                html += '</div>';
-                return html;
-            },
-
-            renderMarkers() {
-                this.markers.forEach(m => m.remove());
-                this.markers = [];
-
-                const filtered = this.filter
-                    ? this.leads.filter(l => l.status === this.filter)
-                    : this.leads;
-
-                filtered.forEach(lead => {
-                    const m = L.circleMarker([lead.lat, lead.lng], {
-                        radius: 9,
-                        color: '#fff',
-                        fillColor: lead.color,
-                        fillOpacity: 0.85,
-                        weight: 2
-                    });
-                    m.bindPopup(this.makePopup(lead));
-                    m.addTo(this.map);
-                    this.markers.push(m);
-                });
-            }
-        }"
+        x-data="{ filter: '' }"
+        data-leads="{{ json_encode($this->allLeads) }}"
+        data-territories="{{ json_encode($this->territories) }}"
+        x-init="$nextTick(() => initLeadMap($el, filter))"
+        id="lead-map-root"
     >
         {{-- Filter buttons --}}
         <div class="mb-3 flex flex-wrap items-center gap-2">
             <button
-                @click="setFilter('')"
+                @click="filter = ''; window.leadMapSetFilter('')"
                 :class="filter === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
                 class="rounded-full border px-3 py-1 text-xs font-medium transition-colors">
                 All
             </button>
             @foreach($this->statuses as $s)
             <button
-                @click="setFilter('{{ $s->value }}')"
+                @click="filter = '{{ $s->value }}'; window.leadMapSetFilter('{{ $s->value }}')"
                 :class="filter === '{{ $s->value }}' ? 'ring-2 ring-offset-1 ring-slate-400 opacity-100' : 'opacity-70 hover:opacity-100'"
                 class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium {{ $s->badgeClasses() }} transition-all">
                 {{ $s->label() }}
@@ -113,8 +34,7 @@
 
         {{-- Lead count --}}
         <p class="mt-2 text-xs text-slate-400">
-            <span x-text="filter ? leads.filter(l => l.status === filter).length : leads.length"></span>
-            lead<span x-text="(filter ? leads.filter(l => l.status === filter).length : leads.length) !== 1 ? 's' : ''"></span> on map
+            <span x-text="window.leadMapCount ? window.leadMapCount(filter) : ''"></span>
             @if($this->unlocatedLeads->isNotEmpty())
                 · {{ $this->unlocatedLeads->count() }} without location (listed below)
             @endif
@@ -147,3 +67,92 @@
         </div>
     @endif
 </div>
+
+@script
+<script>
+window.initLeadMap = function (el) {
+    const leads       = JSON.parse(el.dataset.leads       || '[]');
+    const territories = JSON.parse(el.dataset.territories || '[]');
+
+    let allMarkers = [];
+    let currentFilter = '';
+
+    const map = L.map('lead-map-container');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Territory polygon overlays
+    territories.forEach(t => {
+        if (!t.boundary) return;
+        try {
+            L.geoJSON(t.boundary, {
+                style: {
+                    color:       t.color || '#3b82f6',
+                    fillColor:   t.color || '#3b82f6',
+                    fillOpacity: 0.08,
+                    weight:      2
+                }
+            }).bindTooltip(
+                '<strong>' + t.name + '</strong>' + (t.rep ? '<br>' + t.rep : ''),
+                { sticky: true }
+            ).addTo(map);
+        } catch (e) {}
+    });
+
+    function makePopup(lead) {
+        let html = '<div style="min-width:150px">';
+        html += '<div style="font-weight:600;margin-bottom:2px">' + lead.name + '</div>';
+        html += '<div style="color:#64748b;font-size:12px;margin-bottom:4px">' + lead.statusLabel + '</div>';
+        if (lead.phone)   html += '<div style="font-size:12px">' + lead.phone + '</div>';
+        if (lead.address) html += '<div style="font-size:11px;color:#94a3b8">' + lead.address + '</div>';
+        if (lead.rep)     html += '<div style="font-size:12px;margin-top:2px">Rep: ' + lead.rep + '</div>';
+        html += '<a href="' + lead.url + '" style="display:inline-block;margin-top:6px;font-size:12px;color:#2563eb">View Lead &#x2192;</a>';
+        html += '</div>';
+        return html;
+    }
+
+    function renderMarkers(filter) {
+        allMarkers.forEach(m => m.remove());
+        allMarkers = [];
+
+        const visible = filter ? leads.filter(l => l.status === filter) : leads;
+
+        visible.forEach(lead => {
+            const m = L.circleMarker([lead.lat, lead.lng], {
+                radius:      9,
+                color:       '#fff',
+                fillColor:   lead.color,
+                fillOpacity: 0.85,
+                weight:      2
+            });
+            m.bindPopup(makePopup(lead));
+            m.addTo(map);
+            allMarkers.push(m);
+        });
+    }
+
+    // Initial render
+    renderMarkers('');
+
+    if (leads.length > 0) {
+        const bounds = leads.map(l => [l.lat, l.lng]);
+        map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] });
+    } else {
+        map.setView([32.45, -99.73], 12);
+    }
+
+    // Expose filter function and count to Alpine
+    window.leadMapSetFilter = function (val) {
+        currentFilter = val;
+        renderMarkers(val);
+    };
+
+    window.leadMapCount = function (filter) {
+        const n = filter ? leads.filter(l => l.status === filter).length : leads.length;
+        return n + ' lead' + (n !== 1 ? 's' : '') + ' on map';
+    };
+};
+</script>
+@endscript

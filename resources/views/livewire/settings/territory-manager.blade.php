@@ -123,94 +123,17 @@
                     </p>
                 @endif
 
+                {{-- Data attributes pass PHP values to JS without embedding JS in HTML attributes --}}
                 <div
-                    x-data="{
-                        map: null,
-                        drawnItems: null,
-                        initBoundary: {{ $boundary ?: 'null' }},
-                        existingTerritories: {{ Js::from($this->existingTerritories) }},
-                        editingId: {{ $editingId ?? 'null' }},
-
-                        init() {
-                            this.$nextTick(() => { this.initMap(); });
-                        },
-
-                        initMap() {
-                            this.map = L.map('territory-draw-map');
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '\u00a9 <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>',
-                                maxZoom: 19
-                            }).addTo(this.map);
-
-                            this.drawnItems = new L.FeatureGroup();
-                            this.map.addLayer(this.drawnItems);
-
-                            const drawControl = new L.Control.Draw({
-                                draw: {
-                                    polygon: { allowIntersection: false, showArea: true },
-                                    polyline: false,
-                                    rectangle: false,
-                                    circle: false,
-                                    marker: false,
-                                    circlemarker: false
-                                },
-                                edit: { featureGroup: this.drawnItems }
-                            });
-                            this.map.addControl(drawControl);
-
-                            const wire = this.$wire;
-
-                            this.map.on(L.Draw.Event.CREATED, (e) => {
-                                this.drawnItems.clearLayers();
-                                this.drawnItems.addLayer(e.layer);
-                                wire.set('boundary', JSON.stringify(e.layer.toGeoJSON()));
-                            });
-
-                            this.map.on(L.Draw.Event.EDITED, (e) => {
-                                e.layers.eachLayer(layer => {
-                                    wire.set('boundary', JSON.stringify(layer.toGeoJSON()));
-                                });
-                            });
-
-                            this.map.on(L.Draw.Event.DELETED, () => {
-                                wire.set('boundary', '');
-                            });
-
-                            // Load existing boundary if editing
-                            if (this.initBoundary) {
-                                try {
-                                    const geoLayer = L.geoJSON(this.initBoundary);
-                                    geoLayer.getLayers().forEach(l => this.drawnItems.addLayer(l));
-                                    this.map.fitBounds(this.drawnItems.getBounds(), { padding: [20, 20] });
-                                } catch(e) {
-                                    this.map.setView([32.45, -99.73], 11);
-                                }
-                            } else {
-                                this.map.setView([32.45, -99.73], 11);
-                            }
-
-                            // Show other territories as reference
-                            this.existingTerritories
-                                .filter(t => t.id !== this.editingId)
-                                .forEach(t => {
-                                    if (!t.boundary) return;
-                                    try {
-                                        L.geoJSON(t.boundary, {
-                                            style: {
-                                                color: t.color || '#64748b',
-                                                fillColor: t.color || '#64748b',
-                                                fillOpacity: 0.06,
-                                                weight: 1.5,
-                                                dashArray: '5,5'
-                                            }
-                                        }).bindTooltip(t.name, { sticky: true }).addTo(this.map);
-                                    } catch(e) {}
-                                });
-                        }
-                    }"
+                    wire:ignore
+                    wire:key="territory-map-{{ $editingId ?? 'new' }}"
+                    x-data="{}"
+                    x-init="$nextTick(() => initTerritoryDrawMap($el, $wire))"
+                    data-boundary="{{ $boundary }}"
+                    data-existing="{{ json_encode($this->existingTerritories) }}"
+                    data-editing="{{ $editingId ?? '' }}"
                 >
-                    <div wire:ignore
-                         id="territory-draw-map"
+                    <div id="territory-draw-map"
                          class="overflow-hidden rounded-xl border border-slate-200 shadow-sm"
                          style="height: 400px;"></div>
                 </div>
@@ -230,3 +153,86 @@
         </div>
     @endif
 </div>
+
+@script
+<script>
+window.initTerritoryDrawMap = function (el, wire) {
+    const boundaryStr      = el.dataset.boundary   || '';
+    const existingStr      = el.dataset.existing   || '[]';
+    const editingId        = el.dataset.editing     ? parseInt(el.dataset.editing) : null;
+
+    let initBoundary = null;
+    try { if (boundaryStr) initBoundary = JSON.parse(boundaryStr); } catch (e) {}
+
+    let existingTerritories = [];
+    try { existingTerritories = JSON.parse(existingStr); } catch (e) {}
+
+    const map = L.map('territory-draw-map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    const drawControl = new L.Control.Draw({
+        draw: {
+            polygon:      { allowIntersection: false, showArea: true },
+            polyline:     false,
+            rectangle:    false,
+            circle:       false,
+            marker:       false,
+            circlemarker: false
+        },
+        edit: { featureGroup: drawnItems }
+    });
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.CREATED, (e) => {
+        drawnItems.clearLayers();
+        drawnItems.addLayer(e.layer);
+        wire.set('boundary', JSON.stringify(e.layer.toGeoJSON()));
+    });
+
+    map.on(L.Draw.Event.EDITED, (e) => {
+        e.layers.eachLayer(layer => {
+            wire.set('boundary', JSON.stringify(layer.toGeoJSON()));
+        });
+    });
+
+    map.on(L.Draw.Event.DELETED, () => {
+        wire.set('boundary', '');
+    });
+
+    if (initBoundary) {
+        try {
+            const geoLayer = L.geoJSON(initBoundary);
+            geoLayer.getLayers().forEach(l => drawnItems.addLayer(l));
+            map.fitBounds(drawnItems.getBounds(), { padding: [20, 20] });
+        } catch (e) {
+            map.setView([32.45, -99.73], 11);
+        }
+    } else {
+        map.setView([32.45, -99.73], 11);
+    }
+
+    existingTerritories
+        .filter(t => t.id !== editingId)
+        .forEach(t => {
+            if (!t.boundary) return;
+            try {
+                L.geoJSON(t.boundary, {
+                    style: {
+                        color:       t.color || '#64748b',
+                        fillColor:   t.color || '#64748b',
+                        fillOpacity: 0.06,
+                        weight:      1.5,
+                        dashArray:   '5,5'
+                    }
+                }).bindTooltip(t.name, { sticky: true }).addTo(map);
+            } catch (e) {}
+        });
+};
+</script>
+@endscript
