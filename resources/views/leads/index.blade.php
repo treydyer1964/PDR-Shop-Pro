@@ -9,9 +9,15 @@
             var leads       = JSON.parse(el.dataset.leads       || '[]');
             var territories = JSON.parse(el.dataset.territories || '[]');
 
-            var allMarkers = [];
+            // Guard: destroy any existing Leaflet instance on this container
+            var container = document.getElementById('lead-map-container');
+            if (container && container._leaflet_id) {
+                window._leadMap && window._leadMap.remove();
+            }
 
             var map = L.map('lead-map-container');
+            window._leadMap = map;
+
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors',
                 maxZoom: 19
@@ -41,10 +47,12 @@
                 if (lead.phone)   html += '<div style="font-size:12px">' + lead.phone + '</div>';
                 if (lead.address) html += '<div style="font-size:11px;color:#94a3b8">' + lead.address + '</div>';
                 if (lead.rep)     html += '<div style="font-size:12px;margin-top:2px">Rep: ' + lead.rep + '</div>';
-                html += '<a href="' + lead.url + '" style="display:inline-block;margin-top:6px;font-size:12px;color:#2563eb">View Lead &#x2192;</a>';
+                html += '<a href="' + lead.url + '" onclick="event.stopPropagation()" style="display:inline-block;margin-top:6px;font-size:12px;color:#2563eb">View Lead &#x2192;</a>';
                 html += '</div>';
                 return html;
             }
+
+            var allMarkers = [];
 
             function renderMarkers(filter) {
                 allMarkers.forEach(function (m) { m.remove(); });
@@ -59,30 +67,33 @@
                         weight:      2
                     });
                     m.bindPopup(makePopup(lead));
+                    // Stop click from propagating to map (prevents create-lead trigger)
+                    m.on('click', function (e) { L.DomEvent.stopPropagation(e); });
                     m.addTo(map);
                     allMarkers.push(m);
                 });
             }
 
-            renderMarkers('');
-
-            if (leads.length > 0) {
+            // Set initial view first so map has a valid state
+            if (leads.length === 1) {
+                map.setView([leads[0].lat, leads[0].lng], 15);
+            } else if (leads.length > 1) {
                 var bounds = leads.map(function (l) { return [l.lat, l.lng]; });
-                map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] });
+                map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40] });
             } else {
                 map.setView([32.45, -99.73], 12);
             }
 
-            // Tap/click on map to create a new lead at that location
+            renderMarkers('');
+
+            // Tap empty map space to create a new lead at that location
             map.on('click', function (e) {
                 var lat = e.latlng.lat.toFixed(6);
                 var lng = e.latlng.lng.toFixed(6);
                 window.location.href = '/leads/create?lat=' + lat + '&lng=' + lng;
             });
 
-            // Change cursor to crosshair to hint that the map is clickable
-            var container = map.getContainer();
-            container.style.cursor = 'crosshair';
+            map.getContainer().style.cursor = 'crosshair';
 
             window.leadMapSetFilter = function (val) { renderMarkers(val); };
             window.leadMapCount = function (filter) {
@@ -90,7 +101,7 @@
                 return n + ' lead' + (n !== 1 ? 's' : '') + ' on map';
             };
 
-            setTimeout(function () { map.invalidateSize(); }, 100);
+            setTimeout(function () { map.invalidateSize(); }, 150);
         };
         </script>
     </x-slot>
