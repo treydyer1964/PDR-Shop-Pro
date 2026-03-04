@@ -12,10 +12,12 @@ class Customer extends Model
         'tenant_id', 'first_name', 'last_name',
         'phone', 'email', 'address', 'city', 'state', 'zip', 'notes',
         'birthdate', 'drivers_license', 'drivers_license_state',
+        'sms_opted_in',
     ];
 
     protected $casts = [
-        'birthdate' => 'date',
+        'birthdate'    => 'date',
+        'sms_opted_in' => 'boolean',
     ];
 
     public function tenant(): BelongsTo

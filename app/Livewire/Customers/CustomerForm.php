@@ -46,6 +46,8 @@ class CustomerForm extends Component
     #[Validate('nullable|string|max:2')]
     public string $drivers_license_state = '';
 
+    public bool $sms_opted_in = true;
+
     public function mount(?Customer $customer = null): void
     {
         if ($customer?->exists) {
@@ -62,6 +64,7 @@ class CustomerForm extends Component
             $this->birthdate              = $customer->birthdate ? $customer->birthdate->format('Y-m-d') : '';
             $this->drivers_license        = $customer->drivers_license ?? '';
             $this->drivers_license_state  = $customer->drivers_license_state ?? '';
+            $this->sms_opted_in           = (bool) $customer->sms_opted_in;
         }
     }
 
@@ -83,6 +86,7 @@ class CustomerForm extends Component
             'birthdate'              => $this->birthdate ?: null,
             'drivers_license'        => $this->drivers_license ?: null,
             'drivers_license_state'  => $this->drivers_license_state ?: null,
+            'sms_opted_in'           => $this->sms_opted_in,
         ];
 
         if ($this->customer?->exists) {

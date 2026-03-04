@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -25,6 +26,10 @@ class ShopSettings extends Component
     // Commission defaults
     public string $advisorPerCarBonus = '';
 
+    // Default staff
+    public ?int $defaultRiTechId = null;
+    public ?int $defaultPorterId = null;
+
     // Logo
     public $logo = null; // temporary upload
 
@@ -45,12 +50,34 @@ class ShopSettings extends Component
         $this->advisorPerCarBonus = $tenant->advisor_per_car_bonus !== null
             ? number_format((float) $tenant->advisor_per_car_bonus, 2, '.', '')
             : '100.00';
+        $this->defaultRiTechId   = $tenant->default_ri_tech_id;
+        $this->defaultPorterId   = $tenant->default_porter_id;
     }
 
     #[Computed]
     public function tenant()
     {
         return auth()->user()->tenant;
+    }
+
+    #[Computed]
+    public function riTechs()
+    {
+        return User::where('tenant_id', auth()->user()->tenant_id)
+            ->where('active', true)
+            ->whereHas('roles', fn($q) => $q->where('id', 'ri_tech'))
+            ->orderBy('name')
+            ->get();
+    }
+
+    #[Computed]
+    public function porters()
+    {
+        return User::where('tenant_id', auth()->user()->tenant_id)
+            ->where('active', true)
+            ->whereHas('roles', fn($q) => $q->where('id', 'porter'))
+            ->orderBy('name')
+            ->get();
     }
 
     public function save(): void
@@ -65,6 +92,8 @@ class ShopSettings extends Component
             'zip'               => 'nullable|string|max:20',
             'remitAddress'      => 'nullable|string|max:500',
             'advisorPerCarBonus'=> 'nullable|numeric|min:0',
+            'defaultRiTechId'   => 'nullable|integer',
+            'defaultPorterId'   => 'nullable|integer',
             'logo'              => 'nullable|image|max:4096',
         ]);
 
@@ -79,6 +108,8 @@ class ShopSettings extends Component
             'zip'                   => $this->zip ?: null,
             'remit_address'         => $this->remitAddress ?: null,
             'advisor_per_car_bonus' => $this->advisorPerCarBonus !== '' ? (float) $this->advisorPerCarBonus : null,
+            'default_ri_tech_id'    => $this->defaultRiTechId ?: null,
+            'default_porter_id'     => $this->defaultPorterId ?: null,
         ];
 
         // Handle logo upload

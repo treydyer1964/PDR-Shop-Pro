@@ -11,6 +11,7 @@ use App\Models\Location;
 use App\Models\Vehicle;
 use App\Models\VehicleColor;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderAssignment;
 use App\Models\WorkOrderStatusLog;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -51,6 +52,9 @@ class CreateWorkOrder extends Component
 
     // Lead conversion context (optional — set when arriving from lead show page)
     public ?int $fromLeadId = null;
+
+    // Step 2 — SMS opt-in for new customers
+    public bool $cSmsOptedIn = true;
 
     // Step 4 — Job Details
     public int $location_id      = 0;
@@ -218,6 +222,7 @@ class CreateWorkOrder extends Component
                 'birthdate'             => $this->cBirthdate ?: null,
                 'drivers_license'       => $this->cDriversLicense ?: null,
                 'drivers_license_state' => $this->cDriversLicenseState ?: null,
+                'sms_opted_in'          => $this->cSmsOptedIn,
             ]);
             $this->customer_id = $customer->id;
             $this->creatingNewCustomer = false;
@@ -343,6 +348,39 @@ class CreateWorkOrder extends Component
             'status'        => WorkOrderStatus::ToBeAcquired->value,
             'entered_at'    => now(),
         ]);
+
+        // Auto-assign logged-in Sales Advisor as advisor on this WO
+        $user = auth()->user();
+        if ($user->isAdvisor()) {
+            WorkOrderAssignment::create([
+                'tenant_id'     => $tenantId,
+                'work_order_id' => $wo->id,
+                'user_id'       => $user->id,
+                'role'          => \App\Enums\Role::SALES_ADVISOR->value,
+                'split_pct'     => 100,
+            ]);
+        }
+
+        // Auto-assign default R&I Tech and Porter from tenant settings
+        $tenant = $user->tenant;
+        if ($tenant->default_ri_tech_id) {
+            WorkOrderAssignment::create([
+                'tenant_id'     => $tenantId,
+                'work_order_id' => $wo->id,
+                'user_id'       => $tenant->default_ri_tech_id,
+                'role'          => \App\Enums\Role::RI_TECH->value,
+                'split_pct'     => 100,
+            ]);
+        }
+        if ($tenant->default_porter_id) {
+            WorkOrderAssignment::create([
+                'tenant_id'     => $tenantId,
+                'work_order_id' => $wo->id,
+                'user_id'       => $tenant->default_porter_id,
+                'role'          => \App\Enums\Role::PORTER->value,
+                'split_pct'     => 100,
+            ]);
+        }
 
         // Link back to lead if this WO was created from a lead conversion
         if ($this->fromLeadId) {

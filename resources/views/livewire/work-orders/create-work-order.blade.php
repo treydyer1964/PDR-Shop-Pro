@@ -114,6 +114,11 @@
                             </div>
                         </div>
                         <p class="text-xs text-slate-400">DOB and DL# are optional but needed for rental agreements.</p>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input wire:model="cSmsOptedIn" type="checkbox"
+                                   class="rounded border-slate-300 text-blue-600" />
+                            <span class="text-sm text-slate-700">Customer consents to receive SMS text messages</span>
+                        </label>
                         <button wire:click="$set('creatingNewCustomer', false)" type="button"
                                 class="text-xs text-slate-500 hover:text-slate-700">← Back to search</button>
                     </div>

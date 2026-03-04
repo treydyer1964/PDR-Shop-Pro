@@ -106,6 +106,15 @@
                 placeholder="Any relevant notes about this customer…"></textarea>
         </div>
 
+        {{-- SMS Opt-In --}}
+        <div class="flex items-center gap-2">
+            <input wire:model="sms_opted_in" id="sms_opted_in" type="checkbox"
+                   class="rounded border-slate-300 text-blue-600 shadow-sm focus:ring-blue-500" />
+            <label for="sms_opted_in" class="text-sm text-slate-700 cursor-pointer">
+                Customer consents to receive SMS text messages
+            </label>
+        </div>
+
         {{-- Actions --}}
         <div class="flex items-center justify-between gap-3 pt-2">
             <a href="{{ route('customers.index') }}" class="text-sm text-slate-500 hover:text-slate-700">Cancel</a>

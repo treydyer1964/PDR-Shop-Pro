@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -13,6 +14,7 @@ class Tenant extends Model
         'address', 'city', 'state', 'zip',
         'logo_path', 'remit_address',
         'rental_daily_rate', 'advisor_per_car_bonus',
+        'default_ri_tech_id', 'default_porter_id',
         'active',
     ];
 
@@ -28,6 +30,16 @@ class Tenant extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public function defaultRiTech(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'default_ri_tech_id');
+    }
+
+    public function defaultPorter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'default_porter_id');
     }
 
     public function locations(): HasMany

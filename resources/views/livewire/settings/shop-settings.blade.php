@@ -128,6 +128,38 @@
         </div>
     </div>
 
+    {{-- Default Staff --}}
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-100 px-5 py-3">
+            <h3 class="text-sm font-semibold text-slate-700">Default Staff</h3>
+        </div>
+        <div class="p-5 space-y-4">
+            <p class="text-xs text-slate-400">These staff members are automatically assigned to every new work order.</p>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Default R&amp;I Tech</label>
+                    <select wire:model="defaultRiTechId"
+                            class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">— None —</option>
+                        @foreach($this->riTechs as $u)
+                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Default Porter</label>
+                    <select wire:model="defaultPorterId"
+                            class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">— None —</option>
+                        @foreach($this->porters as $u)
+                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Save button --}}
     <div class="flex justify-end">
         <button wire:click="save"
