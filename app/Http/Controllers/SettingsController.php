@@ -41,4 +41,10 @@ class SettingsController extends Controller
     {
         return view('settings.insurance-companies');
     }
+
+    public function territories(): View
+    {
+        abort_unless(auth()->user()->canManageTerritories(), 403);
+        return view('settings.territories');
+    }
 }

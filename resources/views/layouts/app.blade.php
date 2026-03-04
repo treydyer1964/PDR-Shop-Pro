@@ -9,6 +9,7 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+    @isset($headScripts){{ $headScripts }}@endisset
 </head>
 <body class="h-full bg-slate-100 font-sans antialiased" x-data="{ sidebarOpen: false }">
 
@@ -156,6 +157,7 @@
         </main>
     </div>
 
+    @isset($footerScripts){{ $footerScripts }}@endisset
     @livewireScripts
 </body>
 </html>

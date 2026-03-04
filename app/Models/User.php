@@ -77,6 +77,11 @@ class User extends Authenticatable
         return $this->hasRole(RoleEnum::OWNER);
     }
 
+    public function canManageTerritories(): bool
+    {
+        return $this->hasAnyRole([RoleEnum::OWNER, RoleEnum::SALES_MANAGER]);
+    }
+
     /** Payroll access: Owner and Bookkeeper only (not Sales Manager). */
     public function canAccessPayroll(): bool
     {

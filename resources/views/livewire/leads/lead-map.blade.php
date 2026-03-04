@@ -1,0 +1,149 @@
+<div>
+    {{-- Status filter strip --}}
+    <div
+        x-data="{
+            leads: {{ Js::from($this->allLeads) }},
+            territories: {{ Js::from($this->territories) }},
+            map: null,
+            markers: [],
+            filter: '',
+
+            init() {
+                this.$nextTick(() => { this.initMap(); });
+            },
+
+            initMap() {
+                this.map = L.map('lead-map-container');
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '\u00a9 <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(this.map);
+
+                this.territories.forEach(t => {
+                    if (!t.boundary) return;
+                    try {
+                        L.geoJSON(t.boundary, {
+                            style: {
+                                color: t.color || '#3b82f6',
+                                fillColor: t.color || '#3b82f6',
+                                fillOpacity: 0.08,
+                                weight: 2
+                            }
+                        }).bindTooltip(
+                            '<strong>' + t.name + '</strong>' + (t.rep ? '<br>' + t.rep : ''),
+                            { sticky: true }
+                        ).addTo(this.map);
+                    } catch(e) {}
+                });
+
+                this.renderMarkers();
+
+                if (this.leads.length > 0) {
+                    const bounds = this.leads.map(l => [l.lat, l.lng]);
+                    this.map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] });
+                } else {
+                    this.map.setView([32.45, -99.73], 12);
+                }
+            },
+
+            setFilter(val) {
+                this.filter = val;
+                this.renderMarkers();
+            },
+
+            makePopup(lead) {
+                let html = '<div style=\"min-width:150px\">';
+                html += '<div style=\"font-weight:600;margin-bottom:2px\">' + lead.name + '</div>';
+                html += '<div style=\"color:#64748b;font-size:12px;margin-bottom:4px\">' + lead.statusLabel + '</div>';
+                if (lead.phone) html += '<div style=\"font-size:12px\">' + lead.phone + '</div>';
+                if (lead.address) html += '<div style=\"font-size:11px;color:#94a3b8\">' + lead.address + '</div>';
+                if (lead.rep) html += '<div style=\"font-size:12px;margin-top:2px\">Rep: ' + lead.rep + '</div>';
+                html += '<a href=\"' + lead.url + '\" style=\"display:inline-block;margin-top:6px;font-size:12px;color:#2563eb\">View Lead &#x2192;</a>';
+                html += '</div>';
+                return html;
+            },
+
+            renderMarkers() {
+                this.markers.forEach(m => m.remove());
+                this.markers = [];
+
+                const filtered = this.filter
+                    ? this.leads.filter(l => l.status === this.filter)
+                    : this.leads;
+
+                filtered.forEach(lead => {
+                    const m = L.circleMarker([lead.lat, lead.lng], {
+                        radius: 9,
+                        color: '#fff',
+                        fillColor: lead.color,
+                        fillOpacity: 0.85,
+                        weight: 2
+                    });
+                    m.bindPopup(this.makePopup(lead));
+                    m.addTo(this.map);
+                    this.markers.push(m);
+                });
+            }
+        }"
+    >
+        {{-- Filter buttons --}}
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+            <button
+                @click="setFilter('')"
+                :class="filter === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors">
+                All
+            </button>
+            @foreach($this->statuses as $s)
+            <button
+                @click="setFilter('{{ $s->value }}')"
+                :class="filter === '{{ $s->value }}' ? 'ring-2 ring-offset-1 ring-slate-400 opacity-100' : 'opacity-70 hover:opacity-100'"
+                class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium {{ $s->badgeClasses() }} transition-all">
+                {{ $s->label() }}
+            </button>
+            @endforeach
+        </div>
+
+        {{-- Map container --}}
+        <div wire:ignore
+             class="overflow-hidden rounded-xl border border-slate-200 shadow-sm"
+             style="height: 65vh; min-height: 380px;">
+            <div id="lead-map-container" class="h-full w-full"></div>
+        </div>
+
+        {{-- Lead count --}}
+        <p class="mt-2 text-xs text-slate-400">
+            <span x-text="filter ? leads.filter(l => l.status === filter).length : leads.length"></span>
+            lead<span x-text="(filter ? leads.filter(l => l.status === filter).length : leads.length) !== 1 ? 's' : ''"></span> on map
+            @if($this->unlocatedLeads->isNotEmpty())
+                · {{ $this->unlocatedLeads->count() }} without location (listed below)
+            @endif
+        </p>
+    </div>
+
+    {{-- Unlocated leads --}}
+    @if($this->unlocatedLeads->isNotEmpty())
+        <div class="mt-5">
+            <p class="mb-2 text-sm font-semibold text-slate-500">No Location</p>
+            <div class="space-y-2">
+                @foreach($this->unlocatedLeads as $lead)
+                    <a href="{{ route('leads.show', $lead) }}" wire:navigate
+                       class="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
+                        <div>
+                            <span class="font-medium text-slate-800">{{ $lead->fullName() }}</span>
+                            <span class="ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $lead->status->badgeClasses() }}">
+                                {{ $lead->status->label() }}
+                            </span>
+                            @if($lead->assignedUser)
+                                <span class="ml-2 text-sm text-slate-400">{{ $lead->assignedUser->name }}</span>
+                            @endif
+                        </div>
+                        <svg class="h-4 w-4 shrink-0 text-slate-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+</div>

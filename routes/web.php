@@ -107,6 +107,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings/insurance-companies',      [SettingsController::class, 'insuranceCompanies'])->name('settings.insurance-companies');
     });
 
+    // Territories: Owner + Sales Manager
+    Route::get('/settings/territories', [SettingsController::class, 'territories'])
+        ->name('settings.territories')
+        ->middleware('role:owner,sales_manager');
+
     // ── Profile ───────────────────────────────────────────────────────────────
     Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
