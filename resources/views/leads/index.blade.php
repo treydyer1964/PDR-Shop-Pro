@@ -4,6 +4,84 @@
     </x-slot>
     <x-slot name="footerScripts">
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/sp38=" crossorigin="anonymous"></script>
+        <script>
+        window.initLeadMap = function (el) {
+            var leads       = JSON.parse(el.dataset.leads       || '[]');
+            var territories = JSON.parse(el.dataset.territories || '[]');
+
+            var allMarkers = [];
+
+            var map = L.map('lead-map-container');
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            territories.forEach(function (t) {
+                if (!t.boundary) return;
+                try {
+                    L.geoJSON(t.boundary, {
+                        style: {
+                            color:       t.color || '#3b82f6',
+                            fillColor:   t.color || '#3b82f6',
+                            fillOpacity: 0.08,
+                            weight:      2
+                        }
+                    }).bindTooltip(
+                        '<strong>' + t.name + '</strong>' + (t.rep ? '<br>' + t.rep : ''),
+                        { sticky: true }
+                    ).addTo(map);
+                } catch (e) {}
+            });
+
+            function makePopup(lead) {
+                var html = '<div style="min-width:150px">';
+                html += '<div style="font-weight:600;margin-bottom:2px">' + lead.name + '</div>';
+                html += '<div style="color:#64748b;font-size:12px;margin-bottom:4px">' + lead.statusLabel + '</div>';
+                if (lead.phone)   html += '<div style="font-size:12px">' + lead.phone + '</div>';
+                if (lead.address) html += '<div style="font-size:11px;color:#94a3b8">' + lead.address + '</div>';
+                if (lead.rep)     html += '<div style="font-size:12px;margin-top:2px">Rep: ' + lead.rep + '</div>';
+                html += '<a href="' + lead.url + '" style="display:inline-block;margin-top:6px;font-size:12px;color:#2563eb">View Lead &#x2192;</a>';
+                html += '</div>';
+                return html;
+            }
+
+            function renderMarkers(filter) {
+                allMarkers.forEach(function (m) { m.remove(); });
+                allMarkers = [];
+                var visible = filter ? leads.filter(function (l) { return l.status === filter; }) : leads;
+                visible.forEach(function (lead) {
+                    var m = L.circleMarker([lead.lat, lead.lng], {
+                        radius:      9,
+                        color:       '#fff',
+                        fillColor:   lead.color,
+                        fillOpacity: 0.85,
+                        weight:      2
+                    });
+                    m.bindPopup(makePopup(lead));
+                    m.addTo(map);
+                    allMarkers.push(m);
+                });
+            }
+
+            renderMarkers('');
+
+            if (leads.length > 0) {
+                var bounds = leads.map(function (l) { return [l.lat, l.lng]; });
+                map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] });
+            } else {
+                map.setView([32.45, -99.73], 12);
+            }
+
+            window.leadMapSetFilter = function (val) { renderMarkers(val); };
+            window.leadMapCount = function (filter) {
+                var n = filter ? leads.filter(function (l) { return l.status === filter; }).length : leads.length;
+                return n + ' lead' + (n !== 1 ? 's' : '') + ' on map';
+            };
+
+            setTimeout(function () { map.invalidateSize(); }, 100);
+        };
+        </script>
     </x-slot>
 
     <x-slot name="header">Leads</x-slot>
