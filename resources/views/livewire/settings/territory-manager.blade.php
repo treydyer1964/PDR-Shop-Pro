@@ -125,7 +125,6 @@
 
                 {{-- Data attributes pass PHP values to JS without embedding JS in HTML attributes --}}
                 <div
-                    wire:ignore
                     wire:key="territory-map-{{ $editingId ?? 'new' }}"
                     x-data="{}"
                     x-init="$nextTick(() => initTerritoryDrawMap($el, $wire))"
@@ -133,7 +132,8 @@
                     data-existing="{{ json_encode($this->existingTerritories) }}"
                     data-editing="{{ $editingId ?? '' }}"
                 >
-                    <div id="territory-draw-map"
+                    <div wire:ignore
+                         id="territory-draw-map"
                          class="overflow-hidden rounded-xl border border-slate-200 shadow-sm"
                          style="height: 400px;"></div>
                 </div>
