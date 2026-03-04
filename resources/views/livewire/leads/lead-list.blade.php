@@ -1,6 +1,6 @@
 <div>
     {{-- Filters --}}
-    <div class="mb-4 flex flex-wrap items-center gap-3">
+    <div class="mb-3 flex flex-wrap items-center gap-3">
         <input wire:model.live.debounce.300ms="search" type="search"
                placeholder="Search name, phone, address…"
                class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:w-64" />
@@ -23,16 +23,64 @@
         </select>
         @endif
 
-        @if($this->stormEvents->isNotEmpty())
         <select wire:model.live="filterStorm"
                 class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
             <option value="">All Events</option>
-            @foreach($this->stormEvents as $storm)
+            @forelse($this->stormEvents as $storm)
                 <option value="{{ $storm->id }}">
                     {{ $storm->name }}{{ $storm->city ? ' — ' . $storm->city . ($storm->state ? ', ' . $storm->state : '') : '' }}
                 </option>
-            @endforeach
+            @empty
+                <option value="" disabled>No events yet</option>
+            @endforelse
         </select>
+    </div>
+
+    {{-- Date filter row --}}
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+        {{-- Quick presets --}}
+        <span class="text-xs font-medium text-slate-400 mr-1">Date:</span>
+        @php
+            $today     = now()->toDateString();
+            $yesterday = now()->subDay()->toDateString();
+            $weekStart = now()->startOfWeek()->toDateString();
+            $monthStart= now()->startOfMonth()->toDateString();
+        @endphp
+        <button @click="$wire.set('filterDateFrom', '{{ $today }}'); $wire.set('filterDateTo', '');"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors
+                    {{ $filterDateFrom === $today && $filterDateTo === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+            Today
+        </button>
+        <button @click="$wire.set('filterDateFrom', '{{ $yesterday }}'); $wire.set('filterDateTo', '{{ $yesterday }}');"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors
+                    {{ $filterDateFrom === $yesterday && $filterDateTo === $yesterday ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+            Yesterday
+        </button>
+        <button @click="$wire.set('filterDateFrom', '{{ $weekStart }}'); $wire.set('filterDateTo', '');"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors
+                    {{ $filterDateFrom === $weekStart && $filterDateTo === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+            This Week
+        </button>
+        <button @click="$wire.set('filterDateFrom', '{{ $monthStart }}'); $wire.set('filterDateTo', '');"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors
+                    {{ $filterDateFrom === $monthStart && $filterDateTo === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+            This Month
+        </button>
+
+        {{-- Custom range --}}
+        <div class="flex items-center gap-1.5 ml-1">
+            <input wire:model.live="filterDateFrom" type="date"
+                   class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
+            <span class="text-xs text-slate-400">–</span>
+            <input wire:model.live="filterDateTo" type="date"
+                   class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
+        </div>
+
+        @if($filterDateFrom || $filterDateTo)
+        <button wire:click="clearDateFilter"
+                class="text-xs text-slate-400 hover:text-red-500 transition-colors">
+            ✕ Clear date
+        </button>
         @endif
     </div>
 

@@ -25,13 +25,28 @@ class LeadList extends Component
     #[Url(as: 'storm')]
     public string $filterStorm = '';
 
+    #[Url(as: 'from')]
+    public string $filterDateFrom = '';
+
+    #[Url(as: 'to')]
+    public string $filterDateTo = '';
+
     #[Url(as: 'q')]
     public string $search = '';
 
-    public function updatedFilterStatus(): void { $this->resetPage(); }
-    public function updatedFilterRep(): void    { $this->resetPage(); }
-    public function updatedFilterStorm(): void  { $this->resetPage(); }
-    public function updatedSearch(): void       { $this->resetPage(); }
+    public function updatedFilterStatus(): void   { $this->resetPage(); }
+    public function updatedFilterRep(): void      { $this->resetPage(); }
+    public function updatedFilterStorm(): void    { $this->resetPage(); }
+    public function updatedFilterDateFrom(): void { $this->resetPage(); }
+    public function updatedFilterDateTo(): void   { $this->resetPage(); }
+    public function updatedSearch(): void         { $this->resetPage(); }
+
+    public function clearDateFilter(): void
+    {
+        $this->filterDateFrom = '';
+        $this->filterDateTo   = '';
+        $this->resetPage();
+    }
 
     #[Computed]
     public function leads()
@@ -42,9 +57,11 @@ class LeadList extends Component
         $query = Lead::forTenant($tenantId)
             ->with(['assignedUser', 'territory', 'stormEvent'])
             ->withCount(['followUps as pending_follow_ups_count' => fn($q) => $q->whereNull('completed_at')])
-            ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
-            ->when($this->filterRep,    fn($q) => $q->where('assigned_to', $this->filterRep))
-            ->when($this->filterStorm,  fn($q) => $q->where('storm_event_id', $this->filterStorm))
+            ->when($this->filterStatus,   fn($q) => $q->where('status', $this->filterStatus))
+            ->when($this->filterRep,      fn($q) => $q->where('assigned_to', $this->filterRep))
+            ->when($this->filterStorm,    fn($q) => $q->where('storm_event_id', $this->filterStorm))
+            ->when($this->filterDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->filterDateFrom))
+            ->when($this->filterDateTo,   fn($q) => $q->whereDate('created_at', '<=', $this->filterDateTo))
             ->when($this->search,       fn($q) => $q->where(function($q2) {
                 $q2->where('first_name', 'like', "%{$this->search}%")
                    ->orWhere('last_name',  'like', "%{$this->search}%")
