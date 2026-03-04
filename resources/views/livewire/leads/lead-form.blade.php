@@ -201,31 +201,43 @@
                     </div>
                 </div>
 
-                @if(!auth()->user()->isFieldStaff())
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {{-- Assigned Rep --}}
+                @if(auth()->user()->isFieldStaff())
+                    {{-- Advisors: show their name read-only --}}
                     <div>
                         <label class="block text-sm font-medium text-slate-700">Assigned Rep</label>
-                        <select wire:model="assigned_to"
-                                class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">Unassigned</option>
-                            @foreach($this->reps as $rep)
-                                <option value="{{ $rep->id }}">{{ $rep->name }}</option>
-                            @endforeach
-                        </select>
+                        <p class="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                            {{ auth()->user()->name }}
+                            <span class="ml-1 text-xs text-slate-400">(you)</span>
+                        </p>
                     </div>
-                    @if($this->territories->isNotEmpty())
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">Territory</label>
-                        <select wire:model="territory_id"
-                                class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">No territory</option>
-                            @foreach($this->territories as $t)
-                                <option value="{{ $t->id }}">{{ $t->name }}</option>
-                            @endforeach
-                        </select>
+                @else
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Assigned Rep</label>
+                            <select wire:model="assigned_to"
+                                    class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="">Unassigned</option>
+                                @foreach($this->reps as $rep)
+                                    <option value="{{ $rep->id }}">{{ $rep->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Territory: Owners and Sales Managers only --}}
+                        @if(auth()->user()->canManageTerritories() && $this->territories->isNotEmpty())
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Territory</label>
+                            <select wire:model="territory_id"
+                                    class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="">No territory</option>
+                                @foreach($this->territories as $t)
+                                    <option value="{{ $t->id }}">{{ $t->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
                     </div>
-                    @endif
-                </div>
                 @endif
 
                 @if($this->stormEvents->isNotEmpty())

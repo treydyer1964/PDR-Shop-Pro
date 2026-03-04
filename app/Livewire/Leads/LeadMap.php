@@ -6,6 +6,7 @@ use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\StormEvent;
 use App\Models\Territory;
+use App\Models\User;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -14,6 +15,30 @@ class LeadMap extends Component
 {
     #[Url(as: 'storm')]
     public string $filterStorm = '';
+
+    #[Url(as: 'rep')]
+    public string $filterRep = '';
+
+    #[Url(as: 'from')]
+    public string $filterDateFrom = '';
+
+    #[Url(as: 'to')]
+    public string $filterDateTo = '';
+
+    public function clearDateFilter(): void
+    {
+        $this->filterDateFrom = '';
+        $this->filterDateTo   = '';
+    }
+
+    #[Computed]
+    public function reps()
+    {
+        return User::where('tenant_id', auth()->user()->tenant_id)
+            ->whereHas('roles', fn($q) => $q->whereIn('name', ['owner', 'sales_manager', 'sales_advisor']))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
 
     #[Computed]
     public function stormEvents()
@@ -33,7 +58,10 @@ class LeadMap extends Component
             ->with(['assignedUser'])
             ->whereNotNull('lat')
             ->whereNotNull('lng')
-            ->when($this->filterStorm, fn($q) => $q->where('storm_event_id', $this->filterStorm));
+            ->when($this->filterStorm,    fn($q) => $q->where('storm_event_id', $this->filterStorm))
+            ->when($this->filterRep,      fn($q) => $q->where('assigned_to', $this->filterRep))
+            ->when($this->filterDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->filterDateFrom))
+            ->when($this->filterDateTo,   fn($q) => $q->whereDate('created_at', '<=', $this->filterDateTo));
 
         if ($user->isFieldStaff()) {
             $query->where('assigned_to', $user->id);
@@ -63,7 +91,10 @@ class LeadMap extends Component
         $query = Lead::forTenant($tenantId)
             ->with(['assignedUser'])
             ->where(fn($q) => $q->whereNull('lat')->orWhereNull('lng'))
-            ->when($this->filterStorm, fn($q) => $q->where('storm_event_id', $this->filterStorm));
+            ->when($this->filterStorm,    fn($q) => $q->where('storm_event_id', $this->filterStorm))
+            ->when($this->filterRep,      fn($q) => $q->where('assigned_to', $this->filterRep))
+            ->when($this->filterDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->filterDateFrom))
+            ->when($this->filterDateTo,   fn($q) => $q->whereDate('created_at', '<=', $this->filterDateTo));
 
         if ($user->isFieldStaff()) {
             $query->where('assigned_to', $user->id);

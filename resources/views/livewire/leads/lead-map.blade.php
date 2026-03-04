@@ -1,25 +1,47 @@
 <div>
-    {{-- Storm filter (Livewire, triggers re-render) --}}
-    @if($this->stormEvents->isNotEmpty())
-    <div class="mb-3 flex items-center gap-2">
-        <svg class="h-4 w-4 shrink-0 text-sky-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
-        </svg>
+    {{-- Server-side filters (trigger Livewire re-render + Leaflet reinit via wire:key) --}}
+    <div class="mb-3 flex flex-wrap items-center gap-3">
+
         <select wire:model.live="filterStorm"
                 class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            <option value="">All Storm Events</option>
-            @foreach($this->stormEvents as $storm)
+            <option value="">All Events</option>
+            @forelse($this->stormEvents as $storm)
                 <option value="{{ $storm->id }}">
                     {{ $storm->name }}{{ $storm->city ? ' — ' . $storm->city . ($storm->state ? ', ' . $storm->state : '') : '' }}
                 </option>
+            @empty
+                <option value="" disabled>No events yet</option>
+            @endforelse
+        </select>
+
+        @if(!auth()->user()->isFieldStaff())
+        <select wire:model.live="filterRep"
+                class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <option value="">All Reps</option>
+            @foreach($this->reps as $rep)
+                <option value="{{ $rep->id }}">{{ $rep->name }}</option>
             @endforeach
         </select>
-    </div>
-    @endif
+        @endif
 
-    {{-- Status filter strip + map (wire:key forces Leaflet reinit when storm filter changes) --}}
+        <div class="flex items-center gap-1.5">
+            <input wire:model.live="filterDateFrom" type="date"
+                   class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
+            <span class="text-xs text-slate-400">–</span>
+            <input wire:model.live="filterDateTo" type="date"
+                   class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
+        </div>
+
+        @if($filterDateFrom || $filterDateTo)
+        <button wire:click="clearDateFilter" class="text-xs text-slate-400 hover:text-red-500 transition-colors">
+            ✕ Clear date
+        </button>
+        @endif
+    </div>
+
+    {{-- Status filter strip + map (wire:key forces Leaflet reinit when server-side filters change) --}}
     <div
-        wire:key="lead-map-{{ $this->filterStorm }}"
+        wire:key="lead-map-{{ $this->filterStorm }}-{{ $this->filterRep }}-{{ $this->filterDateFrom }}-{{ $this->filterDateTo }}"
         x-data="{ filter: '' }"
         data-leads="{{ json_encode($this->allLeads) }}"
         data-territories="{{ json_encode($this->territories) }}"
