@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\MeshDailyRecord;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -78,20 +77,15 @@ class ProcessMeshData extends Command
         $this->line($outputStr);
 
         // ── Update DB record ──────────────────────────────────────────────────
-        // Load the npy to get the actual peak value (expensive for 3500×7000 grid)
-        // Instead, we read it from the rendered max.npy via a quick Python one-liner
         $maxSize = $this->readNpyMax($python, $npyAbsPath);
 
-        MeshDailyRecord::updateOrCreate(
-            ['record_date' => $date],
-            [
-                'png_path'        => $pngRelPath,
-                'npy_path'        => $npyAbsPath,
-                'max_size_inches' => $maxSize,
-                'frame_count'     => \DB::raw('frame_count + 1'),
-                'last_frame_at'   => now(),
-            ]
-        );
+        $record = MeshDailyRecord::firstOrNew(['record_date' => $date]);
+        $record->png_path        = $pngRelPath;
+        $record->npy_path        = $npyAbsPath;
+        $record->max_size_inches = $maxSize;
+        $record->frame_count     = ($record->frame_count ?? 0) + 1;
+        $record->last_frame_at   = now();
+        $record->save();
 
         $this->info("MESH swath updated for {$date} — peak {$maxSize}\" hail.");
         return 0;
