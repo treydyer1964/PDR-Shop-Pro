@@ -85,11 +85,12 @@ def download_file(url, dest_path):
 
 # ── GRIB2 decode ──────────────────────────────────────────────────────────────
 
-def read_mesh_grid(grib2_path):
+def read_mesh_grid(grib2_path, downsample=10):
     """
     Read the first message whose value array matches GRID_NJ × GRID_NI.
     MRMS MESH values are stored in mm; we convert to inches.
-    Returns float32 numpy array (GRID_NJ, GRID_NI) in inches.
+    Immediately downsamples via max-pool to reduce memory footprint.
+    Returns float32 numpy array (GRID_NJ//downsample, GRID_NI//downsample) in inches.
     """
     with open(grib2_path, 'rb') as f:
         while True:
@@ -111,6 +112,15 @@ def read_mesh_grid(grib2_path):
                 grid_mm[grid_mm < 0.0] = 0.0
                 # mm → inches
                 grid_in = grid_mm / 25.4
+
+                # Immediately max-pool downsample to keep memory manageable
+                # Full grid: 3500×7000 × 4 bytes = ~94 MB
+                # Downsampled: 350×700 × 4 bytes = ~980 KB
+                nj, ni = grid_in.shape
+                oh = nj // downsample
+                ow = ni // downsample
+                grid_in = grid_in[:oh * downsample, :ow * downsample]
+                grid_in = grid_in.reshape(oh, downsample, ow, downsample).max(axis=(1, 3))
                 return grid_in
 
     raise ValueError(
@@ -136,20 +146,12 @@ def update_accumulator(grid_in, acc_path):
 
 # ── Render PNG ────────────────────────────────────────────────────────────────
 
-def render_png(grid_in, output_path, downsample=10):
+def render_png(grid_in, output_path):
     """
-    Downsample (max-pool) then render RGBA PNG.
-    Output size: (GRID_NJ // downsample) × (GRID_NI // downsample).
+    Render already-downsampled MESH grid to RGBA PNG.
+    grid_in should already be at the desired output resolution.
     """
-    nj, ni = grid_in.shape
-    oh = nj // downsample
-    ow = ni // downsample
-
-    # Max-pool: keep peak hail value per tile
-    small = grid_in[:oh * downsample, :ow * downsample]
-    small = small.reshape(oh, downsample, ow, downsample).max(axis=(1, 3))
-
-    rgba = apply_colormap(small)
+    rgba = apply_colormap(grid_in)
     img = Image.fromarray(rgba, 'RGBA')
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     img.save(output_path, 'PNG', optimize=True)
@@ -177,15 +179,15 @@ def main():
         with gzip.open(gz_path, 'rb') as gz_f, open(grib2_path, 'wb') as out_f:
             out_f.write(gz_f.read())
 
-        # 3. Decode grid
-        grid_in = read_mesh_grid(grib2_path)
+        # 3. Decode grid (already downsampled to ~350×700 inside this call)
+        grid_in = read_mesh_grid(grib2_path, downsample=args.downsample)
 
-        # 4. Update accumulator (daily max)
+        # 4. Update accumulator (daily max at downsampled resolution: ~980 KB/day)
         if args.accumulator:
             grid_in = update_accumulator(grid_in, args.accumulator)
 
         # 5. Render PNG
-        render_png(grid_in, args.output, downsample=args.downsample)
+        render_png(grid_in, args.output)
 
     print(f"OK: {args.output}")
 
