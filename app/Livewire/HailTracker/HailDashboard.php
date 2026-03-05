@@ -27,6 +27,9 @@ class HailDashboard extends Component
     #[Url]
     public bool $showWarnings = false;
 
+    #[Url]
+    public bool $showMesh = false;
+
     // Set after a successful Deploy action — shows a success banner
     public ?int $deployedStormEventId = null;
 
@@ -68,6 +71,11 @@ class HailDashboard extends Component
     public function toggleWarnings(): void
     {
         $this->showWarnings = !$this->showWarnings;
+    }
+
+    public function toggleMesh(): void
+    {
+        $this->showMesh = !$this->showMesh;
     }
 
     // ── Data fetching ─────────────────────────────────────────────────────────────

@@ -14,6 +14,7 @@
             var selectedDate = el.dataset.selectedDate || '';
             var showRadar    = el.dataset.showRadar    === '1';
             var showWarnings = el.dataset.showWarnings === '1';
+            var showMesh     = el.dataset.showMesh     === '1';
             var today        = new Date().toISOString().split('T')[0];
             var isToday      = (selectedDate === today);
 
@@ -56,6 +57,29 @@
                     attribution: 'Radar: IEM / NEXRAD',
                     opacity:     0.60,
                     zIndex:      5
+                }).addTo(map);
+            }
+
+            // ── MRMS MESH hail swath overlay ─────────────────────────────────────
+            // MESH = Maximum Estimated Size of Hail — continuous swath, not point reports
+
+            if (showMesh) {
+                var meshTileUrl;
+
+                if (isToday) {
+                    meshTileUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms_mesh-900913/{z}/{x}/{y}.png';
+                } else {
+                    var mParts = selectedDate.split('-');
+                    var mYy    = mParts[0].substring(2);
+                    var mMm    = mParts[1];
+                    var mDd    = mParts[2];
+                    meshTileUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms_mesh-' + mYy + mMm + mDd + '2300-900913/{z}/{x}/{y}.png';
+                }
+
+                L.tileLayer(meshTileUrl, {
+                    attribution: 'MESH: IEM / MRMS',
+                    opacity:     0.75,
+                    zIndex:      6  // above radar (5), below SPC dots (default)
                 }).addTo(map);
             }
 
