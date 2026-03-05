@@ -86,6 +86,11 @@
                 <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Admin</p>
             </div>
             <x-nav-item route="settings.index" icon="cog-6-tooth">Settings</x-nav-item>
+            @elseif(auth()->user()?->canManageTerritories())
+            <div class="pt-4 pb-1 px-2">
+                <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Admin</p>
+            </div>
+            <x-nav-item route="settings.territories" icon="cog-6-tooth">Settings</x-nav-item>
             @endif
         </nav>
 

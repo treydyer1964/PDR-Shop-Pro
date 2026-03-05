@@ -1,5 +1,6 @@
 <nav class="lg:w-48 shrink-0">
     <ul class="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible">
+        @if(auth()->user()?->canManageStaff())
         @php
             $links = [
                 ['route' => 'settings.shop',                 'label' => 'Shop Info'],
@@ -22,6 +23,7 @@
                 </a>
             </li>
         @endforeach
+        @endif
 
         {{-- Staff management link (already built) --}}
         <li class="lg:mt-4">
