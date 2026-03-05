@@ -41,7 +41,7 @@ class LeadForm extends Component
     {
         if ($lead && $lead->exists) {
             $this->lead          = $lead;
-            $this->first_name    = $lead->first_name;
+            $this->first_name    = $lead->first_name ?? '';
             $this->last_name     = $lead->last_name ?? '';
             $this->phone         = $lead->phone ?? '';
             $this->email         = $lead->email ?? '';
