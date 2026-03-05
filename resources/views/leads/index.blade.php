@@ -40,10 +40,26 @@
                 } catch (e) {}
             });
 
+            function makePinIcon(color) {
+                var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="28" height="40">'
+                    + '<path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 26 14 26S28 24.5 28 14C28 6.268 21.732 0 14 0z" fill="' + color + '" stroke="white" stroke-width="2"/>'
+                    + '<circle cx="14" cy="14" r="5" fill="white" opacity="0.85"/>'
+                    + '</svg>';
+                return L.divIcon({
+                    html:        svg,
+                    className:   '',
+                    iconSize:    [28, 40],
+                    iconAnchor:  [14, 40],
+                    popupAnchor: [0, -38]
+                });
+            }
+
             function makePopup(lead) {
-                var html = '<div style="min-width:150px">';
-                html += '<div style="font-weight:600;margin-bottom:2px">' + lead.name + '</div>';
-                html += '<div style="color:#64748b;font-size:12px;margin-bottom:4px">' + lead.statusLabel + '</div>';
+                var dot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + lead.color + ';margin-right:4px;vertical-align:middle"></span>';
+                var html = '<div style="min-width:160px">';
+                html += '<div style="font-weight:600;margin-bottom:3px">' + (lead.name || '<em style="color:#94a3b8">No name</em>') + '</div>';
+                html += '<div style="font-size:12px;margin-bottom:4px">' + dot + lead.statusLabel + '</div>';
+                if (lead.damageLabel) html += '<div style="font-size:12px;color:#c2410c;margin-bottom:2px">&#9651; ' + lead.damageLabel + '</div>';
                 if (lead.phone)   html += '<div style="font-size:12px">' + lead.phone + '</div>';
                 if (lead.address) html += '<div style="font-size:11px;color:#94a3b8">' + lead.address + '</div>';
                 if (lead.rep)     html += '<div style="font-size:12px;margin-top:2px">Rep: ' + lead.rep + '</div>';
@@ -59,13 +75,7 @@
                 allMarkers = [];
                 var visible = filter ? leads.filter(function (l) { return l.status === filter; }) : leads;
                 visible.forEach(function (lead) {
-                    var m = L.circleMarker([lead.lat, lead.lng], {
-                        radius:      9,
-                        color:       '#fff',
-                        fillColor:   lead.color,
-                        fillOpacity: 0.85,
-                        weight:      2
-                    });
+                    var m = L.marker([lead.lat, lead.lng], { icon: makePinIcon(lead.color) });
                     m.bindPopup(makePopup(lead));
                     // Stop click from propagating to map (prevents create-lead trigger)
                     m.on('click', function (e) { L.DomEvent.stopPropagation(e); });

@@ -67,14 +67,17 @@ class LeadMap extends Component
             $query->where('assigned_to', $user->id);
         }
 
+        $overrides = auth()->user()->tenant->lead_status_labels ?? [];
+
         return $query->get()->map(fn($lead) => [
             'id'          => $lead->id,
             'lat'         => $lead->lat,
             'lng'         => $lead->lng,
-            'name'        => $lead->fullName(),
+            'name'        => $lead->hasName() ? $lead->fullName() : '',
             'status'      => $lead->status->value,
-            'statusLabel' => $lead->status->label(),
+            'statusLabel' => $overrides[$lead->status->value] ?? $lead->status->label(),
             'color'       => $this->statusColor($lead->status),
+            'damageLabel' => $lead->damageLevelLabel(),
             'phone'       => $lead->phone,
             'address'     => $lead->locationLabel(),
             'rep'         => $lead->assignedUser?->name,

@@ -95,7 +95,9 @@
                     <a href="{{ route('leads.show', $lead) }}" wire:navigate
                        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
                         <div>
-                            <span class="font-medium text-slate-800">{{ $lead->fullName() }}</span>
+                            <span class="font-medium text-slate-800">
+                            {{ $lead->hasName() ? $lead->fullName() : 'No name yet' }}
+                        </span>
                             <span class="ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $lead->status->badgeClasses() }}">
                                 {{ $lead->status->label() }}
                             </span>
