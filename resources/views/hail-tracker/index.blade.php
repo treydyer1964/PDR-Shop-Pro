@@ -10,6 +10,7 @@
 
         window.initHailMap = function (el) {
             var reports      = JSON.parse(el.dataset.reports      || '[]');
+            var events       = JSON.parse(el.dataset.events       || '[]');
             var subscription = JSON.parse(el.dataset.subscription || 'null');
             var selectedDate = el.dataset.selectedDate || '';
             var showRadar    = el.dataset.showRadar    === '1';
@@ -60,27 +61,32 @@
                 }).addTo(map);
             }
 
-            // ── MRMS MESH hail swath overlay ─────────────────────────────────────
-            // MESH = Maximum Estimated Size of Hail — continuous swath, not point reports
+            // ── Storm area circles (estimated coverage from SPC clusters) ─────────
+            // Draws a filled circle per hail event using the cluster's coverage radius
 
             if (showMesh) {
-                var meshTileUrl;
+                events.forEach(function (e) {
+                    if (!e.lat || !e.lng || !e.coverageRadiusM) return;
 
-                if (isToday) {
-                    meshTileUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms_mesh-900913/{z}/{x}/{y}.png';
-                } else {
-                    var mParts = selectedDate.split('-');
-                    var mYy    = mParts[0].substring(2);
-                    var mMm    = mParts[1];
-                    var mDd    = mParts[2];
-                    meshTileUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms_mesh-' + mYy + mMm + mDd + '2300-900913/{z}/{x}/{y}.png';
-                }
-
-                L.tileLayer(meshTileUrl, {
-                    attribution: 'MESH: IEM / MRMS',
-                    opacity:     0.75,
-                    zIndex:      6  // above radar (5), below SPC dots (default)
-                }).addTo(map);
+                    L.circle([e.lat, e.lng], {
+                        radius:      e.coverageRadiusM,
+                        color:       e.color,
+                        weight:      1.5,
+                        fillColor:   e.color,
+                        fillOpacity: 0.18,
+                        opacity:     0.55
+                    }).addTo(map).bindPopup(
+                        '<div style="min-width:160px">' +
+                        '<div style="font-weight:700;font-size:14px;margin-bottom:3px">' +
+                            e.maxSize + '" — ' + e.sizeLabel +
+                        '</div>' +
+                        (e.location ? '<div style="color:#64748b;font-size:12px">' + e.location + '</div>' : '') +
+                        '<div style="color:#94a3b8;font-size:11px;margin-top:2px">' +
+                            e.reportCount + ' reports · ~' + Math.round(e.coverageRadiusM / 1609.34) + ' mi radius' +
+                        '</div>' +
+                        '</div>'
+                    );
+                });
             }
 
             // ── NWS active warnings overlay ───────────────────────────────────────

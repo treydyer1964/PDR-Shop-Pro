@@ -197,6 +197,7 @@ class HailDashboard extends Component
                     'sizeLabel'      => $e->sizeLabel(),
                     'badgeClass'     => $e->sizeBadgeClasses(),
                     // Watch state
+                    'coverageRadiusM' => (int) ($e->coverage_radius_miles * 1609.34),
                     'watchStatus'    => $watch ? $watch['status'] : null,
                     'stormEventId'   => $watch['storm_event_id'] ?? null,
                 ];
