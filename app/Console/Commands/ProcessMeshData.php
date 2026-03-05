@@ -77,7 +77,7 @@ class ProcessMeshData extends Command
         $this->line($outputStr);
 
         // ── Update DB record ──────────────────────────────────────────────────
-        $maxSize = $this->readNpyMax($python, $npyAbsPath);
+        $maxSize = $this->readMetaJson($pngAbsPath);
 
         $record = MeshDailyRecord::firstOrNew(['record_date' => $date]);
         $record->png_path        = $pngRelPath;
@@ -140,18 +140,14 @@ class ProcessMeshData extends Command
     }
 
     /**
-     * Quick Python one-liner to get the max value from a .npy file (in inches).
+     * Read peak MESH value (inches) from the companion JSON written by mesh_render.py.
+     * JSON path = same as PNG but with .json extension.
      */
-    private function readNpyMax(string $python, string $npyPath): float
+    private function readMetaJson(string $pngAbsPath): float
     {
-        if (!file_exists($npyPath)) return 0.0;
-
-        $val = shell_exec(
-            escapeshellarg($python) . ' -c ' .
-            escapeshellarg("import numpy as np; a=np.load(" . json_encode($npyPath) . "); print(round(float(a.max()),2))") .
-            ' 2>/dev/null'
-        );
-
-        return (float) trim((string) $val);
+        $jsonPath = preg_replace('/\.png$/', '.json', $pngAbsPath);
+        if (!file_exists($jsonPath)) return 0.0;
+        $data = @json_decode(file_get_contents($jsonPath), true);
+        return (float) ($data['max_inches'] ?? 0.0);
     }
 }

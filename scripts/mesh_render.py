@@ -189,6 +189,12 @@ def main():
         # 5. Render PNG
         render_png(grid_in, args.output)
 
+        # 6. Write metadata JSON (peak value) for PHP to read
+        import json
+        meta_path = os.path.splitext(args.output)[0] + '.json'
+        with open(meta_path, 'w') as mf:
+            json.dump({'max_inches': round(float(grid_in.max()), 3)}, mf)
+
     print(f"OK: {args.output}")
 
 
