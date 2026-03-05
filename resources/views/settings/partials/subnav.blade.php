@@ -9,6 +9,7 @@
                 ['route' => 'settings.appointment-types',    'label' => 'Appointment Types'],
                 ['route' => 'settings.vehicle-colors',       'label' => 'Vehicle Colors'],
                 ['route' => 'settings.insurance-companies',  'label' => 'Insurance Companies'],
+                ['route' => 'settings.hail-alerts',          'label' => 'Hail Alerts'],
             ];
         @endphp
         @foreach($links as $link)

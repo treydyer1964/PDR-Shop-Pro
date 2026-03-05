@@ -52,4 +52,9 @@ class SettingsController extends Controller
     {
         return view('settings.lead-statuses');
     }
+
+    public function hailAlerts(): View
+    {
+        return view('settings.hail-alerts');
+    }
 }

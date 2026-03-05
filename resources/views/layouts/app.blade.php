@@ -68,6 +68,7 @@
             <x-nav-item route="staff.index" icon="user-group">Staff</x-nav-item>
             @if(auth()->user()?->canAccessAnalytics())
             <x-nav-item route="storm-events.index" icon="cloud">Storms</x-nav-item>
+            <x-nav-item route="hail-tracker.index" icon="cloud-arrow-down">Hail Tracker</x-nav-item>
             @endif
             @endif
             @if(auth()->user()?->canCreateWorkOrders())

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\HailTrackerController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\StormEventController;
 use App\Http\Controllers\AppointmentController;
@@ -80,6 +81,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/storm-events/{stormEvent}', [StormEventController::class, 'show'])->name('storm-events.show');
     });
 
+    // ── Hail Tracker: Owner, Bookkeeper, Sales Manager ────────────────────────
+    Route::middleware('role:owner,bookkeeper,sales_manager')->group(function () {
+        Route::get('/hail-tracker', [HailTrackerController::class, 'index'])->name('hail-tracker.index');
+    });
+
     // ── Analytics: Owner, Bookkeeper, Sales Manager ───────────────────────────
     Route::middleware('role:owner,bookkeeper,sales_manager')->group(function () {
         Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
@@ -105,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings/appointment-types',        [SettingsController::class, 'appointmentTypes'])->name('settings.appointment-types');
         Route::get('/settings/vehicle-colors',           [SettingsController::class, 'vehicleColors'])->name('settings.vehicle-colors');
         Route::get('/settings/insurance-companies',      [SettingsController::class, 'insuranceCompanies'])->name('settings.insurance-companies');
+        Route::get('/settings/hail-alerts',              [SettingsController::class, 'hailAlerts'])->name('settings.hail-alerts');
     });
 
     // Territories: Owner + Sales Manager
