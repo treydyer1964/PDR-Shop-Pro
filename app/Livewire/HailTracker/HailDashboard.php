@@ -7,6 +7,7 @@ use App\Models\HailAlertSubscription;
 use App\Models\HailEvent;
 use App\Models\HailEventWatch;
 use App\Models\HailReport;
+use App\Models\MeshDailyRecord;
 use App\Models\StormEvent;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Attributes\Computed;
@@ -217,6 +218,18 @@ class HailDashboard extends Component
             'address'     => $sub->home_address,
             'radiusMiles' => $sub->radius_miles,
         ];
+    }
+
+    #[Computed]
+    public function meshRecord(): ?MeshDailyRecord
+    {
+        return MeshDailyRecord::where('record_date', $this->selectedDate)->first();
+    }
+
+    #[Computed]
+    public function meshSwathUrl(): ?string
+    {
+        return $this->meshRecord?->pngUrl();
     }
 
     #[Computed]

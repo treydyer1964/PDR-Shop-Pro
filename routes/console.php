@@ -11,3 +11,6 @@ Artisan::command('inspire', function () {
 // Hail Tracker: re-fetch today's SPC reports every hour, then immediately check alerts
 Schedule::command('hail:fetch-reports')->hourly()
     ->then(fn() => Artisan::call('hail:check-alerts'));
+
+// MRMS MESH: process latest GRIB2 frame every 10 minutes (builds daily max swath)
+Schedule::command('mesh:process')->everyTenMinutes();

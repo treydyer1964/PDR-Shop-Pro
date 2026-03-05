@@ -16,6 +16,7 @@
             var showRadar    = el.dataset.showRadar    === '1';
             var showWarnings = el.dataset.showWarnings === '1';
             var showMesh     = el.dataset.showMesh     === '1';
+            var meshUrl      = el.dataset.meshUrl      || '';
             var today        = new Date().toISOString().split('T')[0];
             var isToday      = (selectedDate === today);
 
@@ -61,32 +62,46 @@
                 }).addTo(map);
             }
 
-            // ── Storm area circles (estimated coverage from SPC clusters) ─────────
-            // Draws a filled circle per hail event using the cluster's coverage radius
+            // ── MESH hail swath overlay (NOAA MRMS daily max) ────────────────────
+            // If a rendered MESH PNG exists for this date, show it as an image overlay.
+            // Falls back to coverage circles (estimated from SPC cluster data) when
+            // MRMS data is not yet available.
 
             if (showMesh) {
-                events.forEach(function (e) {
-                    if (!e.lat || !e.lng || !e.coverageRadiusM) return;
+                if (meshUrl) {
+                    // Real MRMS MESH swath — CONUS bounds match the grid spec
+                    // [SW lat, SW lng] to [NE lat, NE lng]
+                    var meshBounds = [[20.005, -129.995], [55.005, -60.005]];
+                    L.imageOverlay(meshUrl, meshBounds, {
+                        opacity:     0.70,
+                        zIndex:      4,
+                        attribution: 'MESH: NOAA MRMS'
+                    }).addTo(map);
+                } else {
+                    // Fallback: estimated coverage circles from SPC cluster data
+                    events.forEach(function (e) {
+                        if (!e.lat || !e.lng || !e.coverageRadiusM) return;
 
-                    L.circle([e.lat, e.lng], {
-                        radius:      e.coverageRadiusM,
-                        color:       e.color,
-                        weight:      1.5,
-                        fillColor:   e.color,
-                        fillOpacity: 0.18,
-                        opacity:     0.55
-                    }).addTo(map).bindPopup(
-                        '<div style="min-width:160px">' +
-                        '<div style="font-weight:700;font-size:14px;margin-bottom:3px">' +
-                            e.maxSize + '" — ' + e.sizeLabel +
-                        '</div>' +
-                        (e.location ? '<div style="color:#64748b;font-size:12px">' + e.location + '</div>' : '') +
-                        '<div style="color:#94a3b8;font-size:11px;margin-top:2px">' +
-                            e.reportCount + ' reports · ~' + Math.round(e.coverageRadiusM / 1609.34) + ' mi radius' +
-                        '</div>' +
-                        '</div>'
-                    );
-                });
+                        L.circle([e.lat, e.lng], {
+                            radius:      e.coverageRadiusM,
+                            color:       e.color,
+                            weight:      1.5,
+                            fillColor:   e.color,
+                            fillOpacity: 0.18,
+                            opacity:     0.55
+                        }).addTo(map).bindPopup(
+                            '<div style="min-width:160px">' +
+                            '<div style="font-weight:700;font-size:14px;margin-bottom:3px">' +
+                                e.maxSize + '" — ' + e.sizeLabel +
+                            '</div>' +
+                            (e.location ? '<div style="color:#64748b;font-size:12px">' + e.location + '</div>' : '') +
+                            '<div style="color:#94a3b8;font-size:11px;margin-top:2px">' +
+                                e.reportCount + ' reports · ~' + Math.round(e.coverageRadiusM / 1609.34) + ' mi radius' +
+                            '</div>' +
+                            '</div>'
+                        );
+                    });
+                }
             }
 
             // ── NWS active warnings overlay ───────────────────────────────────────
