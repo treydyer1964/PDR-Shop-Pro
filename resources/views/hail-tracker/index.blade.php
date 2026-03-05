@@ -71,7 +71,7 @@
                 if (meshUrl) {
                     // Real MRMS MESH swath — CONUS bounds match the grid spec
                     // [SW lat, SW lng] to [NE lat, NE lng]
-                    var meshBounds = [[20.005, -129.995], [55.005, -60.005]];
+                    var meshBounds = [[20.005, -129.995], [54.995, -60.005]];
                     L.imageOverlay(meshUrl, meshBounds, {
                         opacity:     0.70,
                         zIndex:      4,

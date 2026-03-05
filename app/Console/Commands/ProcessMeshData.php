@@ -18,13 +18,14 @@ class ProcessMeshData extends Command
     protected $description = 'Download and render an MRMS MESH GRIB2 frame, building a daily max swath';
 
     // MRMS base URL (freely accessible, no auth required)
-    const MRMS_BASE = 'https://mrms.ncep.noaa.gov/data/2D/MESH/';
+    // Note: /data/2D/MESH/ redirects to /2D/MESH/ — use the canonical path
+    const MRMS_BASE = 'https://mrms.ncep.noaa.gov/2D/MESH/';
 
     // CONUS image overlay bounds [SW lat, SW lng, NE lat, NE lng]
     // MRMS MESH CONUS grid: lat 20.005–55.005, lon -129.995–(-60.005)
     const CONUS_SW_LAT =  20.005;
     const CONUS_SW_LNG = -129.995;
-    const CONUS_NE_LAT =  55.005;
+    const CONUS_NE_LAT =  54.995;
     const CONUS_NE_LNG = -60.005;
 
     public function handle(): int
@@ -109,7 +110,7 @@ class ProcessMeshData extends Command
 
         if ($date === $today) {
             // NOAA publishes a "latest" symlink — always points to current frame
-            return self::MRMS_BASE . 'MRMS_MESH_00.00.latest.grib2.gz';
+            return self::MRMS_BASE . 'MRMS_MESH.latest.grib2.gz';
         }
 
         // Historical: try to list directory and find a frame for that date
@@ -122,8 +123,8 @@ class ProcessMeshData extends Command
             return null;
         }
 
-        // Extract filenames matching MRMS_MESH_00.00_YYYYMMDD-HHMMSS.grib2.gz
-        preg_match_all('/MRMS_MESH_00\.00_(\d{8}-\d{6})\.grib2\.gz/', $html, $matches);
+        // Extract filenames matching MRMS_MESH_00.50_YYYYMMDD-HHMMSS.grib2.gz
+        preg_match_all('/MRMS_MESH_00\.50_(\d{8}-\d{6})\.grib2\.gz/', $html, $matches);
 
         $frames = array_filter($matches[1], fn($ts) => str_starts_with($ts, $datePart));
         if (empty($frames)) {
@@ -133,7 +134,7 @@ class ProcessMeshData extends Command
         // Use the last frame of the day (most complete swath for historical runs)
         sort($frames);
         $lastFrame = end($frames);
-        return self::MRMS_BASE . "MRMS_MESH_00.00_{$lastFrame}.grib2.gz";
+        return self::MRMS_BASE . "MRMS_MESH_00.50_{$lastFrame}.grib2.gz";
     }
 
     private function findPython(): string
