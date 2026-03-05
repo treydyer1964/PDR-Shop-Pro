@@ -15,6 +15,7 @@ class Tenant extends Model
         'logo_path', 'remit_address',
         'rental_daily_rate', 'advisor_per_car_bonus',
         'default_ri_tech_id', 'default_porter_id',
+        'lead_status_labels',
         'active',
     ];
 
@@ -24,6 +25,7 @@ class Tenant extends Model
             'active'              => 'boolean',
             'rental_daily_rate'   => 'decimal:2',
             'advisor_per_car_bonus' => 'decimal:2',
+            'lead_status_labels'  => 'array',
         ];
     }
 

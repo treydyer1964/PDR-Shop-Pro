@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        {{ $lead->fullName() }}
+        {{ $lead->hasName() ? $lead->fullName() : 'Unnamed Lead' }}
     </x-slot>
     <x-slot name="headerActions">
         <a href="{{ route('leads.index') }}" wire:navigate

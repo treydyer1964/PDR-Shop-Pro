@@ -1,44 +1,7 @@
 <div class="mx-auto max-w-2xl space-y-6">
     <form wire:submit="save" class="space-y-6">
 
-        {{-- Contact info --}}
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div class="border-b border-slate-100 px-5 py-3">
-                <h3 class="text-sm font-semibold text-slate-700">Contact Information</h3>
-            </div>
-            <div class="p-5 space-y-4">
-
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">First Name *</label>
-                        <input wire:model="first_name" type="text" placeholder="First name"
-                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
-                        @error('first_name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">Last Name</label>
-                        <input wire:model="last_name" type="text" placeholder="Last name"
-                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">Phone</label>
-                        <input wire:model="phone" type="tel" inputmode="tel" placeholder="555-000-0000"
-                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">Email</label>
-                        <input wire:model="email" type="email" inputmode="email"
-                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        {{-- Address (with GPS button) --}}
+        {{-- Address (with GPS) — top priority --}}
         <div class="rounded-xl border border-slate-200 bg-white shadow-sm"
              x-data="{ gpsLoading: false, gpsError: '' }"
              x-init="
@@ -62,7 +25,6 @@
              ">
             <div class="border-b border-slate-100 px-5 py-3 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-slate-700">Address</h3>
-                {{-- GPS capture button --}}
                 <div>
                     <button type="button"
                             @click="
@@ -112,7 +74,7 @@
                 @if($lat && $lng)
                     <p class="text-xs text-blue-600 flex items-center gap-1">
                         <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                        Location pinned from map ({{ $lat }}, {{ $lng }})
+                        Location pinned ({{ $lat }}, {{ $lng }})
                         <span x-show="gpsLoading" class="text-slate-400">— looking up address…</span>
                     </p>
                 @endif
@@ -144,10 +106,10 @@
             </div>
         </div>
 
-        {{-- Lead details --}}
+        {{-- Status + Damage Level --}}
         <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
             <div class="border-b border-slate-100 px-5 py-3">
-                <h3 class="text-sm font-semibold text-slate-700">Lead Details</h3>
+                <h3 class="text-sm font-semibold text-slate-700">Assessment</h3>
             </div>
             <div class="p-5 space-y-4">
 
@@ -162,30 +124,38 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">Source</label>
-                        <select wire:model="source"
+                        <label class="block text-sm font-medium text-slate-700">Damage Level</label>
+                        <select wire:model="damage_level"
                                 class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            @foreach($this->sources as $s)
-                                <option value="{{ $s->value }}">{{ $s->label() }}</option>
-                            @endforeach
+                            <option value="">Unknown</option>
+                            <option value="no_damage">No Damage</option>
+                            <option value="light">Light</option>
+                            <option value="medium">Medium</option>
+                            <option value="severe">Severe</option>
+                            <option value="smoked">Smoked</option>
                         </select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">Job Type Interest</label>
-                    <select wire:model="job_type_interest"
-                            class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">Unknown / Not discussed</option>
-                        <option value="insurance">Insurance Claim</option>
-                        <option value="customer_pay">Customer Pay</option>
-                        <option value="wholesale">Wholesale</option>
-                    </select>
+                    <label class="block text-sm font-medium text-slate-700">Notes</label>
+                    <textarea wire:model="notes" rows="3" placeholder="Damage notes, vehicle condition, customer concerns…"
+                              class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                 </div>
+
+            </div>
+        </div>
+
+        {{-- Vehicle & Job Details --}}
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-100 px-5 py-3">
+                <h3 class="text-sm font-semibold text-slate-700">Vehicle & Job</h3>
+            </div>
+            <div class="p-5 space-y-4">
 
                 <div class="grid grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700">Vehicle Year</label>
+                        <label class="block text-sm font-medium text-slate-700">Year</label>
                         <input wire:model="vehicle_year" type="text" inputmode="numeric" maxlength="4" placeholder="2021"
                                class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                     </div>
@@ -201,9 +171,30 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Job Type Interest</label>
+                        <select wire:model="job_type_interest"
+                                class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="insurance">Insurance Claim</option>
+                            <option value="customer_pay">Customer Pay</option>
+                            <option value="wholesale">Wholesale</option>
+                            <option value="">Unknown / Not discussed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Source</label>
+                        <select wire:model="source"
+                                class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @foreach($this->sources as $s)
+                                <option value="{{ $s->value }}">{{ $s->label() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
                 {{-- Assigned Rep --}}
                 @if(auth()->user()->isFieldStaff())
-                    {{-- Advisors: show their name read-only --}}
                     <div>
                         <label class="block text-sm font-medium text-slate-700">Assigned Rep</label>
                         <p class="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
@@ -224,7 +215,6 @@
                             </select>
                         </div>
 
-                        {{-- Territory: Owners and Sales Managers only --}}
                         @if(auth()->user()->canManageTerritories() && $this->territories->isNotEmpty())
                         <div>
                             <label class="block text-sm font-medium text-slate-700">Territory</label>
@@ -255,10 +245,41 @@
                 </div>
                 @endif
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Notes</label>
-                    <textarea wire:model="notes" rows="3" placeholder="Condition of vehicle, customer concerns, etc."
-                              class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+            </div>
+        </div>
+
+        {{-- Contact Info (optional) --}}
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-100 px-5 py-3">
+                <h3 class="text-sm font-semibold text-slate-700">Contact Info <span class="ml-1 text-xs font-normal text-slate-400">(optional — fill in later)</span></h3>
+            </div>
+            <div class="p-5 space-y-4">
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">First Name</label>
+                        <input wire:model="first_name" type="text" placeholder="First name"
+                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        @error('first_name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Last Name</label>
+                        <input wire:model="last_name" type="text" placeholder="Last name"
+                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Phone</label>
+                        <input wire:model="phone" type="tel" inputmode="tel" placeholder="555-000-0000"
+                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Email</label>
+                        <input wire:model="email" type="email" inputmode="email"
+                               class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    </div>
                 </div>
 
             </div>

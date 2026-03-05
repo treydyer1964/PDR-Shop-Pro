@@ -101,6 +101,12 @@ class LeadList extends Component
         return LeadStatus::cases();
     }
 
+    #[Computed]
+    public function statusLabelOverrides(): array
+    {
+        return auth()->user()->tenant->lead_status_labels ?? [];
+    }
+
     public function render()
     {
         return view('livewire.leads.lead-list');

@@ -112,6 +112,11 @@ Route::middleware(['auth'])->group(function () {
         ->name('settings.territories')
         ->middleware('role:owner,sales_manager');
 
+    // Lead Statuses: Owner + Bookkeeper + Sales Manager
+    Route::get('/settings/lead-statuses', [SettingsController::class, 'leadStatuses'])
+        ->name('settings.lead-statuses')
+        ->middleware('role:owner,bookkeeper,sales_manager');
+
     // ── Profile ───────────────────────────────────────────────────────────────
     Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');

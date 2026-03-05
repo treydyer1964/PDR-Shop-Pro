@@ -71,6 +71,13 @@
                 </div>
                 @endif
 
+                @if($lead->damage_level)
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wide">Damage Level</p>
+                    <p class="text-sm text-slate-700">{{ $lead->damageLevelLabel() }}</p>
+                </div>
+                @endif
+
                 @if($lead->job_type_interest)
                 <div>
                     <p class="text-xs font-medium text-slate-400 uppercase tracking-wide">Interest</p>

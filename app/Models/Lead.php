@@ -15,7 +15,7 @@ class Lead extends Model
         'address', 'city', 'state', 'zip', 'lat', 'lng',
         'status', 'source', 'job_type_interest',
         'vehicle_year', 'vehicle_make', 'vehicle_model',
-        'notes', 'assigned_to', 'territory_id', 'storm_event_id',
+        'notes', 'damage_level', 'assigned_to', 'territory_id', 'storm_event_id',
         'converted_work_order_id', 'converted_at', 'created_by',
     ];
 
@@ -70,6 +70,28 @@ class Lead extends Model
     public function fullName(): string
     {
         return trim("{$this->first_name} {$this->last_name}");
+    }
+
+    public function hasName(): bool
+    {
+        return ! empty(trim((string) $this->first_name));
+    }
+
+    public function leadStatusLabel(array $overrides = []): string
+    {
+        return $overrides[$this->status->value] ?? $this->status->label();
+    }
+
+    public function damageLevelLabel(): string
+    {
+        return match($this->damage_level) {
+            'no_damage' => 'No Damage',
+            'light'     => 'Light',
+            'medium'    => 'Medium',
+            'severe'    => 'Severe',
+            'smoked'    => 'Smoked',
+            default     => '',
+        };
     }
 
     public function locationLabel(): string

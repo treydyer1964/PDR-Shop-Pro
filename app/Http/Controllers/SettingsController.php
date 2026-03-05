@@ -47,4 +47,9 @@ class SettingsController extends Controller
         abort_unless(auth()->user()->canManageTerritories(), 403);
         return view('settings.territories');
     }
+
+    public function leadStatuses(): View
+    {
+        return view('settings.lead-statuses');
+    }
 }

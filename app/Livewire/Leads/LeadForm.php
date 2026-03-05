@@ -27,11 +27,12 @@ class LeadForm extends Component
     public string $lng               = '';
     public string $status            = 'new';
     public string $source            = 'door_to_door';
-    public string $job_type_interest = '';
+    public string $job_type_interest = 'insurance';
     public string $vehicle_year      = '';
     public string $vehicle_make      = '';
     public string $vehicle_model     = '';
     public string $notes             = '';
+    public string $damage_level      = '';
     public string $assigned_to       = '';
     public string $territory_id      = '';
     public string $storm_event_id    = '';
@@ -57,6 +58,7 @@ class LeadForm extends Component
             $this->vehicle_make  = $lead->vehicle_make ?? '';
             $this->vehicle_model = $lead->vehicle_model ?? '';
             $this->notes         = $lead->notes ?? '';
+            $this->damage_level  = $lead->damage_level ?? '';
             $this->assigned_to     = $lead->assigned_to ? (string) $lead->assigned_to : '';
             $this->territory_id    = $lead->territory_id ? (string) $lead->territory_id : '';
             $this->storm_event_id  = $lead->storm_event_id ? (string) $lead->storm_event_id : '';
@@ -118,7 +120,7 @@ class LeadForm extends Component
     public function save(): void
     {
         $this->validate([
-            'first_name'        => 'required|string|max:100',
+            'first_name'        => 'nullable|string|max:100',
             'last_name'         => 'nullable|string|max:100',
             'phone'             => 'nullable|string|max:20',
             'email'             => 'nullable|email|max:150',
@@ -135,6 +137,7 @@ class LeadForm extends Component
             'vehicle_make'      => 'nullable|string|max:50',
             'vehicle_model'     => 'nullable|string|max:50',
             'notes'             => 'nullable|string',
+            'damage_level'      => 'nullable|string|max:20',
             'assigned_to'       => 'nullable|integer',
             'territory_id'      => 'nullable|integer',
             'storm_event_id'    => 'nullable|integer',
@@ -143,7 +146,7 @@ class LeadForm extends Component
         $user = auth()->user();
         $data = [
             'tenant_id'          => $user->tenant_id,
-            'first_name'         => $this->first_name,
+            'first_name'         => $this->first_name ?: null,
             'last_name'          => $this->last_name ?: null,
             'phone'              => $this->phone ?: null,
             'email'              => $this->email ?: null,
@@ -160,6 +163,7 @@ class LeadForm extends Component
             'vehicle_make'       => $this->vehicle_make ?: null,
             'vehicle_model'      => $this->vehicle_model ?: null,
             'notes'              => $this->notes ?: null,
+            'damage_level'       => $this->damage_level ?: null,
             'assigned_to'        => $this->assigned_to ?: null,
             'territory_id'       => $this->territory_id ?: null,
             'storm_event_id'     => $this->storm_event_id ?: null,

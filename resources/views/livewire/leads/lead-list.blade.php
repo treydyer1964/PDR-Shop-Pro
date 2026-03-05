@@ -9,7 +9,7 @@
                 class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
             <option value="">All Statuses</option>
             @foreach($this->statuses as $s)
-                <option value="{{ $s->value }}">{{ $s->label() }}</option>
+                <option value="{{ $s->value }}">{{ $this->statusLabelOverrides[$s->value] ?? $s->label() }}</option>
             @endforeach
         </select>
 
@@ -91,13 +91,24 @@
 
             <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="font-semibold text-slate-800">{{ $lead->fullName() }}</span>
+                    @if($lead->hasName())
+                        <span class="font-semibold text-slate-800">{{ $lead->fullName() }}</span>
+                    @else
+                        <span class="text-sm italic text-slate-400">No name yet</span>
+                    @endif
                     <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $lead->status->badgeClasses() }}">
-                        {{ $lead->status->label() }}
+                        {{ $this->statusLabelOverrides[$lead->status->value] ?? $lead->status->label() }}
                     </span>
+                    @if($lead->damage_level)
+                        <span class="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                            {{ $lead->damageLevelLabel() }}
+                        </span>
+                    @endif
+                    @if($lead->hasName())
                     <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
                         {{ $lead->source->label() }}
                     </span>
+                    @endif
                 </div>
 
                 <div class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-slate-500">
