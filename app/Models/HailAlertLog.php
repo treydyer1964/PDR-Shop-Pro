@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HailAlertLog extends Model
 {
+    protected $table = 'hail_alert_log';
+
     protected $fillable = [
         'tenant_id',
         'hail_event_id',
