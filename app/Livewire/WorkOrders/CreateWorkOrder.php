@@ -76,14 +76,13 @@ class CreateWorkOrder extends Component
 
     public function mount(): void
     {
-        // Pre-fill customer when arriving from lead conversion
+        // Pre-fill customer when arriving from lead conversion or estimate import
         if ($customerId = request()->query('customer_id')) {
             $customer = Customer::where('id', $customerId)
                 ->where('tenant_id', auth()->user()->tenant_id)
                 ->first();
             if ($customer) {
                 $this->customer_id = $customer->id;
-                $this->step = 2; // jump past job type if customer is known? Keep on step 1 for job type
             }
         }
 
@@ -93,6 +92,28 @@ class CreateWorkOrder extends Component
                 ->first();
             if ($lead) {
                 $this->fromLeadId = $lead->id;
+            }
+        }
+
+        // Pre-fill from estimate import (vehicle + insurance data in session)
+        if ($prefill = session()->pull('estimate_prefill')) {
+            $this->job_type           = 'insurance';
+            $this->creatingNewVehicle = true;
+            $this->vVin               = $prefill['vehicle_vin']          ?? '';
+            $this->vYear              = $prefill['vehicle_year']         ?? '';
+            $this->vMake              = $prefill['vehicle_make']         ?? '';
+            $this->vModel             = $prefill['vehicle_model']        ?? '';
+            $this->vColor             = $prefill['vehicle_color']        ?? '';
+            $this->insurance_company_id = $prefill['insurance_company_id'] ?? null;
+            $this->claim_number       = $prefill['claim_number']         ?? '';
+            $this->policy_number      = $prefill['policy_number']        ?? '';
+            $this->adjuster_name      = $prefill['adjuster_name']        ?? '';
+            $this->adjuster_phone     = $prefill['adjuster_phone']       ?? '';
+            $this->adjuster_email     = $prefill['adjuster_email']       ?? '';
+
+            // Jump to vehicle step (customer and job type are already resolved)
+            if ($this->customer_id) {
+                $this->step = 3;
             }
         }
     }

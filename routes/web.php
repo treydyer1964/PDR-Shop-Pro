@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\HailTrackerController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\StormEventController;
@@ -43,6 +44,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/work-orders/create', [WorkOrderController::class, 'create'])
         ->middleware('role:owner,bookkeeper,sales_manager,sales_advisor')
         ->name('work-orders.create');
+
+    // Estimate import (OCR intake → pre-fills WO wizard)
+    Route::get('/estimates/import', [EstimateController::class, 'import'])
+        ->middleware('role:owner,bookkeeper,sales_manager,sales_advisor')
+        ->name('estimates.import');
 
     // PDF routes: same access as show (controller checks assignment for field staff)
     Route::get('/work-orders/{workOrder}/invoice/pdf',           [WorkOrderController::class, 'invoicePdf'])->name('work-orders.invoice-pdf');
