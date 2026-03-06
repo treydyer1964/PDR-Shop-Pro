@@ -3,7 +3,7 @@
     <div class="mb-4 flex flex-wrap items-center gap-3">
         <input wire:model.live="selectedDate"
                type="date"
-               max="{{ now()->toDateString() }}"
+               max="{{ now()->subHours(12)->toDateString() }}"
                class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
 
         <button wire:click="setToday"
@@ -231,6 +231,7 @@
              data-events="{{ json_encode($this->events) }}"
              data-subscription="{{ json_encode($this->subscription) }}"
              data-selected-date="{{ $selectedDate }}"
+             data-is-today="{{ $selectedDate === now()->subHours(12)->toDateString() ? '1' : '0' }}"
              data-show-radar="{{ $showRadar ? '1' : '0' }}"
              data-show-warnings="{{ $showWarnings ? '1' : '0' }}"
              data-show-mesh="{{ $showMesh ? '1' : '0' }}"
@@ -247,9 +248,10 @@
             <p class="mt-2 text-xs text-slate-400">
                 {{ $this->reportCount }} report{{ $this->reportCount !== 1 ? 's' : '' }} shown
                 &middot; Hail: NOAA SPC
+                @php $spcToday = now()->subHours(12)->toDateString(); @endphp
                 @if($showRadar)
                     &middot; Radar: Iowa Environmental Mesonet / NEXRAD
-                    @if($selectedDate !== now()->toDateString())
+                    @if($selectedDate !== $spcToday)
                         <span class="text-slate-300">(~23:00 UTC frame)</span>
                     @else
                         <span class="text-slate-300">(live)</span>
@@ -257,7 +259,7 @@
                 @endif
                 @if($showWarnings)
                     &middot; Warnings: NWS
-                    @if($selectedDate !== now()->toDateString())
+                    @if($selectedDate !== $spcToday)
                         <span class="text-slate-300">(historical)</span>
                     @endif
                 @endif
