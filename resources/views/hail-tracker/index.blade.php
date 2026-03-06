@@ -109,7 +109,8 @@
                 var warnUrl;
 
                 if (isToday) {
-                    warnUrl = 'https://api.weather.gov/alerts/active.geojson' +
+                    // NWS no longer supports .geojson suffix — use /alerts/active with Accept header
+                    warnUrl = 'https://api.weather.gov/alerts/active' +
                               '?event=Tornado+Warning,Severe+Thunderstorm+Warning,Tornado+Watch,Severe+Thunderstorm+Watch';
                 } else {
                     // Historical: NWS alerts API with date range
