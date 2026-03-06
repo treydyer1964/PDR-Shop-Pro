@@ -29,13 +29,48 @@ class FetchSpcReports extends Command
         return self::SUCCESS;
     }
 
+    // ── SPC convective day ────────────────────────────────────────────────────────
+
+    /**
+     * SPC convective day runs 12Z–12Z (noon UTC to noon UTC).
+     * Subtracting 12 hours maps midnight UTC to the correct SPC day.
+     * e.g. 00:00 UTC March 6 → 12:00 UTC March 5 → SPC day = March 5
+     */
+    private function spcDay(): Carbon
+    {
+        return now()->subHours(12)->startOfDay();
+    }
+
+    /**
+     * SPC URL for a given date.
+     * - Current SPC day  → today_filtered_hail.csv   (live, updates continuously)
+     * - Previous SPC day → yesterday_filtered_hail.csv (live until 12Z)
+     * - Older dates      → YYMMDD_rpts_hail.csv       (finalized archive)
+     */
+    private function spcUrl(Carbon $date): string
+    {
+        $spcToday     = $this->spcDay();
+        $spcYesterday = (clone $spcToday)->subDay();
+
+        if ($date->isSameDay($spcToday)) {
+            return self::SPC_BASE_URL . 'today_filtered_hail.csv';
+        }
+
+        if ($date->isSameDay($spcYesterday)) {
+            return self::SPC_BASE_URL . 'yesterday_filtered_hail.csv';
+        }
+
+        return self::SPC_BASE_URL . $date->format('ymd') . '_rpts_hail.csv';
+    }
+
     // ── Date resolution ───────────────────────────────────────────────────────────
 
     private function getDatesToFetch(): array
     {
         if ($days = (int) $this->option('backfill')) {
+            $spcToday = $this->spcDay();
             return collect(range(0, $days - 1))
-                ->map(fn($d) => now()->subDays($d)->startOfDay())
+                ->map(fn($d) => (clone $spcToday)->subDays($d))
                 ->all();
         }
 
@@ -43,24 +78,25 @@ class FetchSpcReports extends Command
             return [Carbon::parse($dateStr)->startOfDay()];
         }
 
-        return [now()->startOfDay()];
+        return [$this->spcDay()];
     }
 
     // ── Fetch a single date ───────────────────────────────────────────────────────
 
     private function fetchDate(Carbon $date): void
     {
-        $dateStr = $date->format('Y-m-d');
+        $dateStr  = $date->format('Y-m-d');
+        $spcToday = $this->spcDay();
+        $isToday  = $date->isSameDay($spcToday);
 
-        // Today always re-fetches (SPC updates throughout the day).
+        // Current SPC day always re-fetches (updates continuously).
         // Historical dates skip if already stored, unless --force.
-        if (!$date->isToday() && !$this->option('force') && HailReport::whereDate('report_date', $date)->exists()) {
+        if (!$isToday && !$this->option('force') && HailReport::whereDate('report_date', $date)->exists()) {
             $this->line("Skipping {$dateStr} — already in DB");
             return;
         }
 
-        $urlDate = $date->format('ymd'); // YYMMDD format SPC expects
-        $url     = self::SPC_BASE_URL . "{$urlDate}_rpts_hail.csv";
+        $url = $this->spcUrl($date);
 
         $this->info("Fetching {$url}");
 

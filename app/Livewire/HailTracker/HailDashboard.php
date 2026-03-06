@@ -37,7 +37,8 @@ class HailDashboard extends Component
     public function mount(): void
     {
         if (!$this->selectedDate) {
-            $this->selectedDate = now()->toDateString();
+            // SPC convective day runs 12Z–12Z; subtract 12h so midnight UTC maps to correct day
+            $this->selectedDate = now()->subHours(12)->toDateString();
         }
         $this->ensureData();
     }
@@ -54,7 +55,7 @@ class HailDashboard extends Component
 
     public function setToday(): void
     {
-        $this->selectedDate = now()->toDateString();
+        $this->selectedDate = now()->subHours(12)->toDateString();
         $this->ensureData();
     }
 
@@ -85,8 +86,12 @@ class HailDashboard extends Component
     {
         if (!$this->selectedDate) return;
 
-        $exists = HailReport::whereDate('report_date', $this->selectedDate)->exists();
-        if (!$exists) {
+        $spcToday = now()->subHours(12)->toDateString();
+        $exists   = HailReport::whereDate('report_date', $this->selectedDate)->exists();
+
+        // Always re-fetch for the current SPC day (today_filtered_hail.csv updates live).
+        // Historical dates only fetch if not yet in DB.
+        if (!$exists || $this->selectedDate === $spcToday) {
             Artisan::call('hail:fetch-reports', ['--date' => $this->selectedDate]);
         }
     }
