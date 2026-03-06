@@ -62,46 +62,44 @@
                 }).addTo(map);
             }
 
+            // ── SPC cluster coverage circles (always visible alongside pins) ──────
+            // Drawn regardless of the MESH toggle — gives an immediate visual sense
+            // of how large each hail swath was, directly from SPC report clusters.
+
+            events.forEach(function (e) {
+                if (!e.lat || !e.lng || !e.coverageRadiusM) return;
+
+                L.circle([e.lat, e.lng], {
+                    radius:      e.coverageRadiusM,
+                    color:       e.color,
+                    weight:      1.5,
+                    fillColor:   e.color,
+                    fillOpacity: 0.15,
+                    opacity:     0.50
+                }).addTo(map).bindPopup(
+                    '<div style="min-width:160px">' +
+                    '<div style="font-weight:700;font-size:14px;margin-bottom:3px">' +
+                        e.maxSize + '" — ' + e.sizeLabel +
+                    '</div>' +
+                    (e.location ? '<div style="color:#64748b;font-size:12px">' + e.location + '</div>' : '') +
+                    '<div style="color:#94a3b8;font-size:11px;margin-top:2px">' +
+                        e.reportCount + ' reports · ~' + Math.round(e.coverageRadiusM / 1609.34) + ' mi radius' +
+                    '</div>' +
+                    '</div>'
+                );
+            });
+
             // ── MESH hail swath overlay (NOAA MRMS daily max) ────────────────────
-            // If a rendered MESH PNG exists for this date, show it as an image overlay.
-            // Falls back to coverage circles (estimated from SPC cluster data) when
-            // MRMS data is not yet available.
+            // Toggle button adds the radar-derived MRMS MESH image overlay on top of
+            // the circles above. Only shows when a rendered PNG exists for the date.
 
-            if (showMesh) {
-                if (meshUrl) {
-                    // Real MRMS MESH swath — CONUS bounds match the grid spec
-                    // [SW lat, SW lng] to [NE lat, NE lng]
-                    var meshBounds = [[20.005, -129.995], [54.995, -60.005]];
-                    L.imageOverlay(meshUrl, meshBounds, {
-                        opacity:     0.70,
-                        zIndex:      4,
-                        attribution: 'MESH: NOAA MRMS'
-                    }).addTo(map);
-                } else {
-                    // Fallback: estimated coverage circles from SPC cluster data
-                    events.forEach(function (e) {
-                        if (!e.lat || !e.lng || !e.coverageRadiusM) return;
-
-                        L.circle([e.lat, e.lng], {
-                            radius:      e.coverageRadiusM,
-                            color:       e.color,
-                            weight:      1.5,
-                            fillColor:   e.color,
-                            fillOpacity: 0.18,
-                            opacity:     0.55
-                        }).addTo(map).bindPopup(
-                            '<div style="min-width:160px">' +
-                            '<div style="font-weight:700;font-size:14px;margin-bottom:3px">' +
-                                e.maxSize + '" — ' + e.sizeLabel +
-                            '</div>' +
-                            (e.location ? '<div style="color:#64748b;font-size:12px">' + e.location + '</div>' : '') +
-                            '<div style="color:#94a3b8;font-size:11px;margin-top:2px">' +
-                                e.reportCount + ' reports · ~' + Math.round(e.coverageRadiusM / 1609.34) + ' mi radius' +
-                            '</div>' +
-                            '</div>'
-                        );
-                    });
-                }
+            if (showMesh && meshUrl) {
+                var meshBounds = [[20.005, -129.995], [54.995, -60.005]];
+                L.imageOverlay(meshUrl, meshBounds, {
+                    opacity:     0.70,
+                    zIndex:      4,
+                    attribution: 'MESH: NOAA MRMS'
+                }).addTo(map);
             }
 
             // ── NWS active warnings overlay ───────────────────────────────────────
