@@ -29,7 +29,8 @@ class ProcessMeshData extends Command
 
     public function handle(): int
     {
-        $date = $this->option('date') ?: now()->toDateString();
+        // SPC convective day runs 12Z–12Z; subtract 12h to match hail tracker date
+        $date = $this->option('date') ?: now()->subHours(12)->toDateString();
 
         // ── Resolve GRIB2 URL ─────────────────────────────────────────────────
         if ($this->option('url')) {
@@ -100,7 +101,7 @@ class ProcessMeshData extends Command
      */
     private function resolveUrl(string $date): ?string
     {
-        $today = now()->toDateString();
+        $today = now()->subHours(12)->toDateString();
 
         if ($date === $today) {
             // NOAA publishes a "latest" symlink — always points to current frame
