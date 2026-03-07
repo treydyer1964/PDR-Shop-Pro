@@ -124,18 +124,30 @@
                             });
 
                             map.on('click', function(e) {
-                                // Snap click lat/lng to nearest 0.1° grid cell
-                                var r = Math.round((55.005 - e.latlng.lat)  / 0.1);
-                                var c = Math.round((e.latlng.lng + 129.995) / 0.1);
-                                var v = meshLookup[r + ',' + c];
-                                if (v === undefined) return;
+                                // Snap click lat/lng to nearest 0.1° grid cell,
+                                // then search within ±3 cells for the closest
+                                // colored cell (handles sparse gaps in the swath).
+                                var rBase = Math.round((55.005 - e.latlng.lat)  / 0.1);
+                                var cBase = Math.round((e.latlng.lng + 129.995) / 0.1);
 
-                                var label = meshSizeLabel(v);
+                                var best = null, bestDist = Infinity;
+                                for (var dr = -3; dr <= 3; dr++) {
+                                    for (var dc = -3; dc <= 3; dc++) {
+                                        var v2 = meshLookup[(rBase + dr) + ',' + (cBase + dc)];
+                                        if (v2 !== undefined) {
+                                            var dist = dr * dr + dc * dc;
+                                            if (dist < bestDist) { bestDist = dist; best = v2; }
+                                        }
+                                    }
+                                }
+                                if (best === null) return;
+
+                                var label = meshSizeLabel(best);
                                 L.popup({ maxWidth: 200 })
                                     .setLatLng(e.latlng)
                                     .setContent(
                                         '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' +
-                                            v.toFixed(2) + '" MESH' +
+                                            best.toFixed(2) + '" MESH' +
                                         '</div>' +
                                         '<div style="font-size:12px;color:#64748b">' + label + ' · NOAA MRMS</div>'
                                     )
