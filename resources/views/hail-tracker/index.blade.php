@@ -21,8 +21,8 @@
             var showRadar    = el.dataset.showRadar    === '1';
             var showWarnings = el.dataset.showWarnings === '1';
             var showMesh     = el.dataset.showMesh     === '1';
-            var meshUrl      = el.dataset.meshUrl      || '';
-            var meshDataUrl  = el.dataset.meshDataUrl  || '';
+            var meshUrl      = el.dataset.meshUrl    || '';
+            var meshCells    = JSON.parse(el.dataset.meshCells || '[]');
             // isToday is set server-side using SPC convective day (now()->subHours(12))
             // to avoid the UTC midnight mismatch when selectedDate is still "yesterday" in UTC
             var isToday      = el.dataset.isToday === '1';
@@ -110,51 +110,43 @@
                 }).addTo(map);
 
                 // ── MESH click-to-popup ───────────────────────────────────
-                // Load sparse cell data, build O(1) row/col lookup map,
-                // then show a popup with the MESH value when the user clicks
-                // on a colored swath cell.
-                if (meshDataUrl) {
-                    fetch(meshDataUrl)
-                        .then(function(r) { return r.json(); })
-                        .then(function(cells) {
-                            // Build grid lookup: "row,col" → value in inches
-                            var meshLookup = {};
-                            cells.forEach(function(cell) {
-                                meshLookup[cell.r + ',' + cell.c] = cell.v;
-                            });
+                // Cell data is inlined as a data attribute — no fetch needed.
+                // Build O(1) row/col lookup, then search ±3 cells around each
+                // click to handle sparse gaps between colored grid cells.
+                if (meshCells.length > 0) {
+                    var meshLookup = {};
+                    meshCells.forEach(function(cell) {
+                        meshLookup[cell.r + ',' + cell.c] = cell.v;
+                    });
 
-                            map.on('click', function(e) {
-                                // Snap click lat/lng to nearest 0.1° grid cell,
-                                // then search within ±3 cells for the closest
-                                // colored cell (handles sparse gaps in the swath).
-                                var rBase = Math.round((55.005 - e.latlng.lat)  / 0.1);
-                                var cBase = Math.round((e.latlng.lng + 129.995) / 0.1);
+                    map.on('click', function(e) {
+                        var rBase = Math.round((55.005 - e.latlng.lat)  / 0.1);
+                        var cBase = Math.round((e.latlng.lng + 129.995) / 0.1);
 
-                                var best = null, bestDist = Infinity;
-                                for (var dr = -3; dr <= 3; dr++) {
-                                    for (var dc = -3; dc <= 3; dc++) {
-                                        var v2 = meshLookup[(rBase + dr) + ',' + (cBase + dc)];
-                                        if (v2 !== undefined) {
-                                            var dist = dr * dr + dc * dc;
-                                            if (dist < bestDist) { bestDist = dist; best = v2; }
-                                        }
-                                    }
+                        var best = null, bestDist = Infinity;
+                        for (var dr = -3; dr <= 3; dr++) {
+                            for (var dc = -3; dc <= 3; dc++) {
+                                var v2 = meshLookup[(rBase + dr) + ',' + (cBase + dc)];
+                                if (v2 !== undefined) {
+                                    var dist = dr * dr + dc * dc;
+                                    if (dist < bestDist) { bestDist = dist; best = v2; }
                                 }
-                                if (best === null) return;
+                            }
+                        }
+                        if (best === null) return;
 
-                                var label = meshSizeLabel(best);
-                                L.popup({ maxWidth: 200 })
-                                    .setLatLng(e.latlng)
-                                    .setContent(
-                                        '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' +
-                                            best.toFixed(2) + '" MESH' +
-                                        '</div>' +
-                                        '<div style="font-size:12px;color:#64748b">' + label + ' · NOAA MRMS</div>'
-                                    )
-                                    .openOn(map);
-                            });
-                        })
-                        .catch(function() { /* data.json unavailable — no popup */ });
+                        L.popup({ maxWidth: 200 })
+                            .setLatLng(e.latlng)
+                            .setContent(
+                                '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' +
+                                    best.toFixed(2) + '" MESH' +
+                                '</div>' +
+                                '<div style="font-size:12px;color:#64748b">' +
+                                    meshSizeLabel(best) + ' · NOAA MRMS' +
+                                '</div>'
+                            )
+                            .openOn(map);
+                    });
                 }
             }
 

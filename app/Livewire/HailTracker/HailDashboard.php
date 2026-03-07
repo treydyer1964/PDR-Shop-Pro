@@ -238,6 +238,19 @@ class HailDashboard extends Component
     }
 
     #[Computed]
+    public function meshCells(): array
+    {
+        $record = $this->meshRecord;
+        if (!$record || !$record->png_path) return [];
+
+        $dir  = dirname(ltrim($record->png_path, '/'));
+        $path = \Illuminate\Support\Facades\Storage::disk('public')->path($dir . '/data.json');
+        if (!file_exists($path)) return [];
+
+        return json_decode(file_get_contents($path), true) ?? [];
+    }
+
+    #[Computed]
     public function reportCount(): int
     {
         return count($this->reports);
