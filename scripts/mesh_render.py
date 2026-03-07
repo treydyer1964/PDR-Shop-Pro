@@ -159,29 +159,6 @@ def render_png(grid_in, output_path):
         mask = grid_in >= threshold
         rgba[mask] = color
 
-    # ── Outline: 1-pixel dark border around outer edge of each patch ────────
-    # Dilate the colored mask by 1 pixel in 4 cardinal directions.
-    # Pixels that are in the dilation but NOT in the original colored area
-    # are the outer border ring — paint them with a semi-transparent dark color.
-    colored = rgba[:, :, 3] > 0
-
-    dilated = (
-        colored
-        | np.roll(colored,  1, axis=0)   # row below
-        | np.roll(colored, -1, axis=0)   # row above
-        | np.roll(colored,  1, axis=1)   # col right
-        | np.roll(colored, -1, axis=1)   # col left
-    )
-
-    # Zero out wrap-around edge artifacts from np.roll
-    dilated[0, :]  = colored[0, :]
-    dilated[-1, :] = colored[-1, :]
-    dilated[:, 0]  = colored[:, 0]
-    dilated[:, -1] = colored[:, -1]
-
-    outline = dilated & ~colored
-    rgba[outline] = (30, 30, 30, 200)   # dark gray, 78% opacity
-
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     Image.fromarray(rgba, 'RGBA').save(output_path, format='PNG')
 

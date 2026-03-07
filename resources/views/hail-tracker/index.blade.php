@@ -1,6 +1,11 @@
 <x-app-layout>
     <x-slot name="headScripts">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+        <style>
+            /* Render MESH PNG with nearest-neighbor scaling so each grid cell
+               stays a crisp colored square instead of a blurry interpolated blob */
+            .mesh-pixelated { image-rendering: pixelated; }
+        </style>
     </x-slot>
 
     <x-slot name="footerScripts">
@@ -97,8 +102,9 @@
             if (showMesh && meshUrl) {
                 var meshBounds = [[20.005, -129.995], [54.995, -60.005]];
                 L.imageOverlay(meshUrl, meshBounds, {
-                    opacity:     0.70,
+                    opacity:     0.80,
                     zIndex:      4,
+                    className:   'mesh-pixelated',
                     attribution: 'MESH: NOAA MRMS'
                 }).addTo(map);
             }
