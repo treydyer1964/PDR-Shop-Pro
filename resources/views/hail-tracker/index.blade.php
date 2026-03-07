@@ -83,18 +83,9 @@
                     weight:      1.5,
                     fillColor:   e.color,
                     fillOpacity: 0.15,
-                    opacity:     0.50
-                }).addTo(map).bindPopup(
-                    '<div style="min-width:160px">' +
-                    '<div style="font-weight:700;font-size:14px;margin-bottom:3px">' +
-                        e.maxSize + '" — ' + e.sizeLabel +
-                    '</div>' +
-                    (e.location ? '<div style="color:#64748b;font-size:12px">' + e.location + '</div>' : '') +
-                    '<div style="color:#94a3b8;font-size:11px;margin-top:2px">' +
-                        e.reportCount + ' reports · ~' + Math.round(e.coverageRadiusM / 1609.34) + ' mi radius' +
-                    '</div>' +
-                    '</div>'
-                );
+                    opacity:     0.50,
+                    interactive: false   // pass clicks through to MESH layer / map
+                }).addTo(map);
             });
 
             // ── MESH hail swath overlay (NOAA MRMS daily max) ────────────────────
