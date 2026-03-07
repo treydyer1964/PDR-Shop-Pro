@@ -141,7 +141,9 @@ def render_png(grid_in, output_path):
     Render MESH grid as a per-pixel transparent RGBA PNG using Pillow.
 
     Each grid cell at or above the minimum threshold is painted with its
-    size-band RGBA color. Transparent cells = no significant hail.
+    size-band RGBA color. A 1-pixel dark outline is drawn around the outer
+    boundary of each colored region (outside border), making patches visible
+    against the light OSM basemap.
 
     Grid orientation: row 0 = north (55°N), col 0 = west (−130°W).
     Leaflet imageOverlay stretches from SW→NE, so row 0 must be at the TOP
@@ -156,6 +158,29 @@ def render_png(grid_in, output_path):
     for threshold, color in BANDS:
         mask = grid_in >= threshold
         rgba[mask] = color
+
+    # ── Outline: 1-pixel dark border around outer edge of each patch ────────
+    # Dilate the colored mask by 1 pixel in 4 cardinal directions.
+    # Pixels that are in the dilation but NOT in the original colored area
+    # are the outer border ring — paint them with a semi-transparent dark color.
+    colored = rgba[:, :, 3] > 0
+
+    dilated = (
+        colored
+        | np.roll(colored,  1, axis=0)   # row below
+        | np.roll(colored, -1, axis=0)   # row above
+        | np.roll(colored,  1, axis=1)   # col right
+        | np.roll(colored, -1, axis=1)   # col left
+    )
+
+    # Zero out wrap-around edge artifacts from np.roll
+    dilated[0, :]  = colored[0, :]
+    dilated[-1, :] = colored[-1, :]
+    dilated[:, 0]  = colored[:, 0]
+    dilated[:, -1] = colored[:, -1]
+
+    outline = dilated & ~colored
+    rgba[outline] = (30, 30, 30, 200)   # dark gray, 78% opacity
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     Image.fromarray(rgba, 'RGBA').save(output_path, format='PNG')
