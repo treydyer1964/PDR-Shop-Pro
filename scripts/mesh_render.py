@@ -202,6 +202,18 @@ def main():
         with open(meta_path, 'w') as mf:
             json.dump({'max_inches': round(float(grid_in.max()), 3)}, mf)
 
+        # 7. Write sparse cell data JSON for frontend click/hover lookup.
+        # Stores row/col (integers, compact) + value for every cell >= minimum
+        # threshold. JS converts r/c back to lat/lng using the same grid spec.
+        rows_idx, cols_idx = np.where(grid_in >= 0.75)
+        cells = [
+            {'r': int(r), 'c': int(c), 'v': round(float(grid_in[r, c]), 2)}
+            for r, c in zip(rows_idx, cols_idx)
+        ]
+        data_path = os.path.join(os.path.dirname(args.output), 'data.json')
+        with open(data_path, 'w') as df:
+            json.dump(cells, df, separators=(',', ':'))
+
     print(f"OK: {args.output}")
 
 

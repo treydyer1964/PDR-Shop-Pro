@@ -22,6 +22,7 @@
             var showWarnings = el.dataset.showWarnings === '1';
             var showMesh     = el.dataset.showMesh     === '1';
             var meshUrl      = el.dataset.meshUrl      || '';
+            var meshDataUrl  = el.dataset.meshDataUrl  || '';
             // isToday is set server-side using SPC convective day (now()->subHours(12))
             // to avoid the UTC midnight mismatch when selectedDate is still "yesterday" in UTC
             var isToday      = el.dataset.isToday === '1';
@@ -107,6 +108,42 @@
                     className:   'mesh-pixelated',
                     attribution: 'MESH: NOAA MRMS'
                 }).addTo(map);
+
+                // ── MESH click-to-popup ───────────────────────────────────
+                // Load sparse cell data, build O(1) row/col lookup map,
+                // then show a popup with the MESH value when the user clicks
+                // on a colored swath cell.
+                if (meshDataUrl) {
+                    fetch(meshDataUrl)
+                        .then(function(r) { return r.json(); })
+                        .then(function(cells) {
+                            // Build grid lookup: "row,col" → value in inches
+                            var meshLookup = {};
+                            cells.forEach(function(cell) {
+                                meshLookup[cell.r + ',' + cell.c] = cell.v;
+                            });
+
+                            map.on('click', function(e) {
+                                // Snap click lat/lng to nearest 0.1° grid cell
+                                var r = Math.round((55.005 - e.latlng.lat)  / 0.1);
+                                var c = Math.round((e.latlng.lng + 129.995) / 0.1);
+                                var v = meshLookup[r + ',' + c];
+                                if (v === undefined) return;
+
+                                var label = meshSizeLabel(v);
+                                L.popup({ maxWidth: 200 })
+                                    .setLatLng(e.latlng)
+                                    .setContent(
+                                        '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' +
+                                            v.toFixed(2) + '" MESH' +
+                                        '</div>' +
+                                        '<div style="font-size:12px;color:#64748b">' + label + ' · NOAA MRMS</div>'
+                                    )
+                                    .openOn(map);
+                            });
+                        })
+                        .catch(function() { /* data.json unavailable — no popup */ });
+                }
             }
 
             // ── NWS active warnings overlay ───────────────────────────────────────
@@ -163,6 +200,22 @@
             }
 
             // ── Size helpers ──────────────────────────────────────────────────────
+
+            function meshSizeLabel(v) {
+                if (v >= 4.00) return 'Softball+';
+                if (v >= 3.50) return 'Baseball+';
+                if (v >= 3.00) return 'Baseball';
+                if (v >= 2.75) return 'Baseball−';
+                if (v >= 2.50) return 'Egg';
+                if (v >= 2.25) return 'Hen Egg';
+                if (v >= 2.00) return 'Lime';
+                if (v >= 1.75) return 'Golf Ball';
+                if (v >= 1.50) return 'Ping Pong';
+                if (v >= 1.25) return 'Half Dollar';
+                if (v >= 1.00) return 'Quarter';
+                if (v >= 0.75) return 'Penny';
+                return 'Marble';
+            }
 
             function sizeColor(inches) {
                 if (inches >= 2.5)  return '#ef4444';

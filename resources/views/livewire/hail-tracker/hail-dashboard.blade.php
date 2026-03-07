@@ -239,6 +239,7 @@
              data-show-warnings="{{ $showWarnings ? '1' : '0' }}"
              data-show-mesh="{{ $showMesh ? '1' : '0' }}"
              data-mesh-url="{{ $this->meshSwathUrl ?? '' }}"
+             data-mesh-data-url="{{ $this->meshRecord?->dataUrl() ?? '' }}"
              data-mesh-max="{{ $this->meshRecord?->max_size_inches ?? '' }}"
              x-init="$nextTick(() => initHailMap($el))"
              id="hail-map-root">
