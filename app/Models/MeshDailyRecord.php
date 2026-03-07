@@ -28,6 +28,7 @@ class MeshDailyRecord extends Model
     public function pngUrl(): ?string
     {
         if (!$this->png_path) return null;
-        return asset('storage/' . ltrim($this->png_path, '/'));
+        $ts = $this->last_frame_at ? $this->last_frame_at->timestamp : 0;
+        return asset('storage/' . ltrim($this->png_path, '/')) . '?v=' . $ts;
     }
 }
