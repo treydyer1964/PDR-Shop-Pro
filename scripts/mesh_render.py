@@ -2,8 +2,11 @@
 """
 mesh_render.py — Download, decode, and render one MRMS MESH GRIB2 frame.
 
-Renders as filled contours (matplotlib contourf) with size bands matching
-HailPoint's legend: 0.75" through 4.00"+. Transparent PNG — no axes/borders.
+Renders as a per-pixel RGBA PNG using Pillow. Each grid cell above the
+minimum threshold is painted with its size-band color. This correctly
+renders even isolated single-pixel hail areas (contourf cannot).
+
+Dependencies: eccodes, numpy, Pillow, requests  (no matplotlib needed)
 
 Usage:
     python3.8 mesh_render.py --url <grib2_gz_url> --output /path/to/frame.png
@@ -20,15 +23,11 @@ import gzip
 import tempfile
 import argparse
 
-# Must set backend before importing pyplot — server has no display
-import matplotlib
-matplotlib.use('Agg')
-
 try:
     import eccodes
     import numpy as np
     import requests
-    import matplotlib.pyplot as plt
+    from PIL import Image
 except ImportError as e:
     print(f"Missing dependency: {e}", file=sys.stderr)
     sys.exit(1)
@@ -44,30 +43,29 @@ GRID_NI = 7000
 MISSING_THRESHOLD_MM = 9000.0
 
 # ── Output dimensions — must match Leaflet overlay aspect ratio (2:1 CONUS) ───
+# Grid is 350×700 after 10× downsample; output is the same size (1 px per cell)
 OUT_W = 700   # pixels
 OUT_H = 350   # pixels
-DPI   = 100   # → figure is 7" × 3.5" = exactly 700 × 350 px
 
-# ── Contour levels (inches) and fill colors ───────────────────────────────────
-# 13 boundary values → 12 filled bands, matching HailPoint's legend
-CONTOUR_LEVELS = [0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 3.50, 4.00, 10.0]
-CONTOUR_COLORS = [
-    '#FFFFB2',  # 0.75–1.00"  pale yellow
-    '#FFFF00',  # 1.00–1.25"  yellow
-    '#FFD700',  # 1.25–1.50"  gold
-    '#FFA500',  # 1.50–1.75"  orange
-    '#FF7F00',  # 1.75–2.00"  dark orange
-    '#FF4500',  # 2.00–2.25"  orange-red
-    '#FF0000',  # 2.25–2.50"  red
-    '#CC0000',  # 2.50–2.75"  dark red
-    '#990000',  # 2.75–3.00"  deep red
-    '#660000',  # 3.00–3.50"  maroon
-    '#440022',  # 3.50–4.00"  near-black red
-    '#220033',  # 4.00"+      very dark purple
+# ── Size bands: lower bound (inches), RGBA color ──────────────────────────────
+# Bands are applied in order; each pixel gets the color of its highest bracket.
+# Alpha 191 ≈ 75% opacity (0.75 × 255).
+ALPHA = 191
+
+BANDS = [
+    (0.75,  (255, 255, 178, ALPHA)),  # 0.75–1.00"  pale yellow
+    (1.00,  (255, 255,   0, ALPHA)),  # 1.00–1.25"  yellow
+    (1.25,  (255, 215,   0, ALPHA)),  # 1.25–1.50"  gold
+    (1.50,  (255, 165,   0, ALPHA)),  # 1.50–1.75"  orange
+    (1.75,  (255, 127,   0, ALPHA)),  # 1.75–2.00"  dark orange
+    (2.00,  (255,  69,   0, ALPHA)),  # 2.00–2.25"  orange-red
+    (2.25,  (255,   0,   0, ALPHA)),  # 2.25–2.50"  red
+    (2.50,  (204,   0,   0, ALPHA)),  # 2.50–2.75"  dark red
+    (2.75,  (153,   0,   0, ALPHA)),  # 2.75–3.00"  deep red
+    (3.00,  (102,   0,   0, ALPHA)),  # 3.00–3.50"  maroon
+    (3.50,  ( 68,   0,  34, ALPHA)),  # 3.50–4.00"  near-black red
+    (4.00,  ( 34,   0,  51, ALPHA)),  # 4.00"+       very dark purple
 ]
-
-# Opacity of the filled contour overlay (0–1)
-CONTOUR_ALPHA = 0.75
 
 
 # ── Download ──────────────────────────────────────────────────────────────────
@@ -140,43 +138,27 @@ def update_accumulator(grid_in, acc_path):
 
 def render_png(grid_in, output_path):
     """
-    Render MESH grid as filled contours with transparent background.
+    Render MESH grid as a per-pixel transparent RGBA PNG using Pillow.
 
-    Uses matplotlib contourf so size-band boundaries are smooth interpolated
-    isolines (same visual style as HailPoint) rather than hard per-pixel edges.
+    Each grid cell at or above the minimum threshold is painted with its
+    size-band RGBA color. Transparent cells = no significant hail.
 
     Grid orientation: row 0 = north (55°N), col 0 = west (−130°W).
-    Leaflet imageOverlay stretches PNG from SW→NE, so row 0 must appear at
-    the top of the image — achieved by flipping the Y axis limits.
+    Leaflet imageOverlay stretches from SW→NE, so row 0 must be at the TOP
+    of the image — the numpy array is already in this orientation (no flip).
     """
     h, w = grid_in.shape
 
-    # Mask everything below the lowest threshold — renders transparent
-    masked = np.ma.masked_where(grid_in < CONTOUR_LEVELS[0], grid_in)
+    # Start fully transparent
+    rgba = np.zeros((h, w, 4), dtype=np.uint8)
 
-    fig = plt.figure(figsize=(OUT_W / DPI, OUT_H / DPI), dpi=DPI)
-    ax = fig.add_axes([0, 0, 1, 1])  # full bleed — zero margins
-    ax.set_axis_off()
-    ax.set_xlim(0, w)
-    ax.set_ylim(h, 0)   # flip: Y=0 (north/row-0) at top of image
-
-    if not np.all(masked.mask):
-        x_idx = np.arange(w)
-        y_idx = np.arange(h)
-        X, Y = np.meshgrid(x_idx, y_idx)
-        ax.contourf(
-            X, Y, masked,
-            levels=CONTOUR_LEVELS,
-            colors=CONTOUR_COLORS,
-            alpha=CONTOUR_ALPHA,
-        )
-
-    fig.patch.set_alpha(0)
-    ax.patch.set_alpha(0)
+    # Apply bands from lowest to highest so higher bands overwrite lower
+    for threshold, color in BANDS:
+        mask = grid_in >= threshold
+        rgba[mask] = color
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    fig.savefig(output_path, dpi=DPI, transparent=True, format='png')
-    plt.close(fig)
+    Image.fromarray(rgba, 'RGBA').save(output_path, format='PNG')
 
     return output_path
 
@@ -213,7 +195,7 @@ def main():
         render_png(grid_in, args.output)
 
         # 6. Write peak-value metadata JSON for PHP to read
-        import json
+        import json  # stdlib, always available
         meta_path = os.path.splitext(args.output)[0] + '.json'
         with open(meta_path, 'w') as mf:
             json.dump({'max_inches': round(float(grid_in.max()), 3)}, mf)
