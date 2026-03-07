@@ -1,0 +1,41 @@
+{
+    "name": "PDR Shop Pro",
+    "short_name": "PDR Shop",
+    "description": "Shop management for Paintless Dent Repair businesses",
+    "start_url": "/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "theme_color": "#0f172a",
+    "background_color": "#0f172a",
+    "icons": [
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "New Work Order",
+            "url": "/work-orders/create",
+            "description": "Create a new work order"
+        },
+        {
+            "name": "Work Orders",
+            "url": "/work-orders",
+            "description": "View all work orders"
+        }
+    ]
+}

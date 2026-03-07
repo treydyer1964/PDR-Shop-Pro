@@ -137,3 +137,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// PWA offline fallback — no auth required
+Route::get('/offline', fn() => view('pwa.offline'))->name('pwa.offline');
