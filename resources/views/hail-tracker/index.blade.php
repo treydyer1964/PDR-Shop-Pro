@@ -23,6 +23,7 @@
             var showMesh     = el.dataset.showMesh     === '1';
             var meshUrl      = el.dataset.meshUrl    || '';
             var meshCells    = JSON.parse(el.dataset.meshCells || '[]');
+            console.log('[MESH] cells loaded:', meshCells.length, '| meshUrl:', meshUrl, '| showMesh:', showMesh);
             // isToday is set server-side using SPC convective day (now()->subHours(12))
             // to avoid the UTC midnight mismatch when selectedDate is still "yesterday" in UTC
             var isToday      = el.dataset.isToday === '1';
@@ -133,6 +134,7 @@
                                 }
                             }
                         }
+                        console.log('[MESH] click lat:', e.latlng.lat.toFixed(3), 'lng:', e.latlng.lng.toFixed(3), '→ r:', rBase, 'c:', cBase, '| found:', best);
                         if (best === null) return;
 
                         L.popup({ maxWidth: 200 })
