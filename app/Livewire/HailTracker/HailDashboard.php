@@ -238,16 +238,16 @@ class HailDashboard extends Component
     }
 
     #[Computed]
-    public function meshCells(): array
+    public function meshCellsUrl(): ?string
     {
         $record = $this->meshRecord;
-        if (!$record || !$record->png_path) return [];
+        if (!$record || !$record->png_path) return null;
 
-        $dir  = dirname(ltrim($record->png_path, '/'));
-        $path = \Illuminate\Support\Facades\Storage::disk('public')->path($dir . '/data.json');
-        if (!file_exists($path)) return [];
+        $dir      = dirname($record->png_path);   // mesh/2026-03-05
+        $jsonPath = \Illuminate\Support\Facades\Storage::disk('public')->path($dir . '/data.json');
+        if (!file_exists($jsonPath)) return null;
 
-        return json_decode(file_get_contents($path), true) ?? [];
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($dir . '/data.json');
     }
 
     #[Computed]

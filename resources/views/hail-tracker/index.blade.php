@@ -21,9 +21,8 @@
             var showRadar    = el.dataset.showRadar    === '1';
             var showWarnings = el.dataset.showWarnings === '1';
             var showMesh     = el.dataset.showMesh     === '1';
-            var meshUrl      = el.dataset.meshUrl    || '';
-            var meshCells    = JSON.parse(el.dataset.meshCells || '[]');
-            console.log('[MESH] cells loaded:', meshCells.length, '| meshUrl:', meshUrl, '| showMesh:', showMesh);
+            var meshUrl      = el.dataset.meshUrl       || '';
+            var meshCellsUrl = el.dataset.meshCellsUrl  || '';
             // isToday is set server-side using SPC convective day (now()->subHours(12))
             // to avoid the UTC midnight mismatch when selectedDate is still "yesterday" in UTC
             var isToday      = el.dataset.isToday === '1';
@@ -35,6 +34,10 @@
                 window._hailMap.remove();
                 window._hailMap = null;
             }
+
+            // Clean up any lingering MESH tooltip from previous render
+            var oldTip = document.getElementById('mesh-tooltip');
+            if (oldTip) oldTip.remove();
 
             // Default center: continental US
             var map = L.map('hail-map-container').setView([37.5, -96], 4);
@@ -101,45 +104,83 @@
                     attribution: 'MESH: NOAA MRMS'
                 }).addTo(map);
 
-                // ── MESH click-to-popup ───────────────────────────────────
-                // Cell data is inlined as a data attribute — no fetch needed.
-                // Build O(1) row/col lookup, then search ±3 cells around each
-                // click to handle sparse gaps between colored grid cells.
-                if (meshCells.length > 0) {
-                    var meshLookup = {};
-                    meshCells.forEach(function(cell) {
-                        meshLookup[cell.r + ',' + cell.c] = cell.v;
-                    });
+                // ── MESH hover tooltip + click popup ─────────────────────
+                // Cell data is fetched from data.json (avoids large inline
+                // attribute). O(1) row/col lookup with ±3-cell search window
+                // to handle sparse gaps between colored grid cells.
 
-                    map.on('click', function(e) {
-                        var rBase = Math.round((55.005 - e.latlng.lat)  / 0.1);
-                        var cBase = Math.round((e.latlng.lng + 129.995) / 0.1);
+                if (meshCellsUrl) {
+                    fetch(meshCellsUrl)
+                        .then(function(r) { return r.json(); })
+                        .then(function(cells) {
+                            if (!cells || !cells.length) return;
 
-                        var best = null, bestDist = Infinity;
-                        for (var dr = -3; dr <= 3; dr++) {
-                            for (var dc = -3; dc <= 3; dc++) {
-                                var v2 = meshLookup[(rBase + dr) + ',' + (cBase + dc)];
-                                if (v2 !== undefined) {
-                                    var dist = dr * dr + dc * dc;
-                                    if (dist < bestDist) { bestDist = dist; best = v2; }
+                            // Build lookup: "row,col" → inches
+                            var meshLookup = {};
+                            cells.forEach(function(c) {
+                                meshLookup[c.r + ',' + c.c] = c.v;
+                            });
+
+                            // lat/lng → nearest cell value (±3 cell search)
+                            function lookupMesh(lat, lng) {
+                                var r0 = Math.round((54.995 - lat)  / 0.1);
+                                var c0 = Math.round((lng + 129.995) / 0.1);
+                                var best = null, bestD = Infinity;
+                                for (var dr = -3; dr <= 3; dr++) {
+                                    for (var dc = -3; dc <= 3; dc++) {
+                                        var v = meshLookup[(r0 + dr) + ',' + (c0 + dc)];
+                                        if (v !== undefined) {
+                                            var d = dr * dr + dc * dc;
+                                            if (d < bestD) { bestD = d; best = v; }
+                                        }
+                                    }
                                 }
+                                return best;
                             }
-                        }
-                        console.log('[MESH] click lat:', e.latlng.lat.toFixed(3), 'lng:', e.latlng.lng.toFixed(3), '→ r:', rBase, 'c:', cBase, '| found:', best);
-                        if (best === null) return;
 
-                        L.popup({ maxWidth: 200 })
-                            .setLatLng(e.latlng)
-                            .setContent(
-                                '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' +
-                                    best.toFixed(2) + '" MESH' +
-                                '</div>' +
-                                '<div style="font-size:12px;color:#64748b">' +
-                                    meshSizeLabel(best) + ' · NOAA MRMS' +
-                                '</div>'
-                            )
-                            .openOn(map);
-                    });
+                            // Floating hover tooltip (fixed-position, follows cursor)
+                            var tip = document.createElement('div');
+                            tip.id = 'mesh-tooltip';
+                            tip.style.cssText =
+                                'position:fixed;z-index:9999;background:rgba(15,23,42,0.92);' +
+                                'color:#f8fafc;padding:6px 12px;border-radius:8px;font-size:13px;' +
+                                'pointer-events:none;display:none;white-space:nowrap;' +
+                                'box-shadow:0 4px 14px rgba(0,0,0,0.45);' +
+                                'border:1px solid rgba(255,255,255,0.12);line-height:1.5';
+                            document.body.appendChild(tip);
+
+                            map.on('mousemove', function(e) {
+                                var v = lookupMesh(e.latlng.lat, e.latlng.lng);
+                                if (v === null) { tip.style.display = 'none'; return; }
+                                var orig = e.originalEvent;
+                                tip.style.left    = (orig.clientX + 18) + 'px';
+                                tip.style.top     = (orig.clientY - 44) + 'px';
+                                tip.style.display = 'block';
+                                tip.innerHTML =
+                                    '<span style="font-weight:700;font-size:14px">' + v.toFixed(2) + '"</span>' +
+                                    ' MESH &bull; <span style="color:#94a3b8">' + meshSizeLabel(v) + '</span>';
+                            });
+
+                            map.on('mouseout', function() { tip.style.display = 'none'; });
+
+                            map.on('click', function(e) {
+                                var v = lookupMesh(e.latlng.lat, e.latlng.lng);
+                                if (v === null) return;
+                                tip.style.display = 'none';
+                                L.popup({ maxWidth: 220 })
+                                    .setLatLng(e.latlng)
+                                    .setContent(
+                                        '<div style="font-size:15px;font-weight:700;margin-bottom:3px">' +
+                                            v.toFixed(2) + '" MESH' +
+                                        '</div>' +
+                                        '<div style="font-size:12px;color:#64748b">' +
+                                            meshSizeLabel(v) + ' &bull; NOAA MRMS daily max' +
+                                        '</div>'
+                                    )
+                                    .openOn(map);
+                            });
+                        })
+                        .catch(function() { /* data.json unavailable — swath is display-only */ });
                 }
             }
 
