@@ -35,9 +35,11 @@
                 window._hailMap = null;
             }
 
-            // Clean up any lingering MESH tooltip from previous render
-            var oldTip = document.getElementById('mesh-tooltip');
-            if (oldTip) oldTip.remove();
+            // Clean up any lingering MESH info control from previous render
+            if (window._meshInfoControl) {
+                try { window._meshInfoControl.remove(); } catch(e) {}
+                window._meshInfoControl = null;
+            }
 
             // Default center: continental US
             var map = L.map('hail-map-container').setView([37.5, -96], 4);
@@ -115,67 +117,72 @@
                         .then(function(cells) {
                             if (!cells || !cells.length) return;
 
-                            // Build lookup: "row,col" → inches
+                            // Build O(1) lookup: "row,col" → inches
                             var meshLookup = {};
-                            cells.forEach(function(c) {
-                                meshLookup[c.r + ',' + c.c] = c.v;
+                            cells.forEach(function(cell) {
+                                meshLookup[cell.r + ',' + cell.c] = cell.v;
                             });
 
-                            // lat/lng → nearest cell value (±3 cell search)
+                            // lat/lng → nearest cell value within ±5 cells (~0.5°)
                             function lookupMesh(lat, lng) {
                                 var r0 = Math.round((54.995 - lat)  / 0.1);
                                 var c0 = Math.round((lng + 129.995) / 0.1);
                                 var best = null, bestD = Infinity;
-                                for (var dr = -3; dr <= 3; dr++) {
-                                    for (var dc = -3; dc <= 3; dc++) {
-                                        var v = meshLookup[(r0 + dr) + ',' + (c0 + dc)];
-                                        if (v !== undefined) {
-                                            var d = dr * dr + dc * dc;
-                                            if (d < bestD) { bestD = d; best = v; }
+                                for (var dr = -5; dr <= 5; dr++) {
+                                    for (var dc = -5; dc <= 5; dc++) {
+                                        var val = meshLookup[(r0 + dr) + ',' + (c0 + dc)];
+                                        if (val !== undefined) {
+                                            var dist = dr * dr + dc * dc;
+                                            if (dist < bestD) { bestD = dist; best = val; }
                                         }
                                     }
                                 }
                                 return best;
                             }
 
-                            // Floating hover tooltip (fixed-position, follows cursor)
-                            var tip = document.createElement('div');
-                            tip.id = 'mesh-tooltip';
-                            tip.style.cssText =
-                                'position:fixed;z-index:9999;background:rgba(15,23,42,0.92);' +
-                                'color:#f8fafc;padding:6px 12px;border-radius:8px;font-size:13px;' +
-                                'pointer-events:none;display:none;white-space:nowrap;' +
-                                'box-shadow:0 4px 14px rgba(0,0,0,0.45);' +
-                                'border:1px solid rgba(255,255,255,0.12);line-height:1.5';
-                            document.body.appendChild(tip);
+                            // ── Leaflet corner info panel (hover) ─────────────────
+                            // Using L.control is the standard Leaflet hover-info pattern —
+                            // it's positioned by Leaflet itself so no fixed/absolute CSS issues.
+                            var meshInfo = L.control({ position: 'bottomright' });
+                            meshInfo.onAdd = function() {
+                                this._div = L.DomUtil.create('div', '');
+                                this._div.style.cssText =
+                                    'background:rgba(15,23,42,0.90);color:#f8fafc;' +
+                                    'padding:8px 12px;border-radius:8px;font-size:13px;' +
+                                    'line-height:1.5;min-width:130px;display:none;' +
+                                    'pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,0.35);' +
+                                    'border:1px solid rgba(255,255,255,0.10)';
+                                return this._div;
+                            };
+                            meshInfo.addTo(map);
+                            window._meshInfoControl = meshInfo;
 
                             map.on('mousemove', function(e) {
                                 var v = lookupMesh(e.latlng.lat, e.latlng.lng);
-                                if (v === null) { tip.style.display = 'none'; return; }
-                                var orig = e.originalEvent;
-                                tip.style.left    = (orig.clientX + 18) + 'px';
-                                tip.style.top     = (orig.clientY - 44) + 'px';
-                                tip.style.display = 'block';
-                                tip.innerHTML =
-                                    '<span style="font-weight:700;font-size:14px">' + v.toFixed(2) + '"</span>' +
-                                    ' MESH &bull; <span style="color:#94a3b8">' + meshSizeLabel(v) + '</span>';
+                                if (v === null) {
+                                    meshInfo._div.style.display = 'none';
+                                } else {
+                                    meshInfo._div.style.display = 'block';
+                                    meshInfo._div.innerHTML =
+                                        '<div style="font-size:10px;color:#94a3b8;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px">MESH Swath</div>' +
+                                        '<div style="font-size:18px;font-weight:700;line-height:1">' + v.toFixed(2) + '"</div>' +
+                                        '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + meshSizeLabel(v) + '</div>';
+                                }
                             });
 
-                            map.on('mouseout', function() { tip.style.display = 'none'; });
+                            map.on('mouseout', function() {
+                                meshInfo._div.style.display = 'none';
+                            });
 
+                            // ── Click to pin a popup ───────────────────────────────
                             map.on('click', function(e) {
                                 var v = lookupMesh(e.latlng.lat, e.latlng.lng);
                                 if (v === null) return;
-                                tip.style.display = 'none';
                                 L.popup({ maxWidth: 220 })
                                     .setLatLng(e.latlng)
                                     .setContent(
-                                        '<div style="font-size:15px;font-weight:700;margin-bottom:3px">' +
-                                            v.toFixed(2) + '" MESH' +
-                                        '</div>' +
-                                        '<div style="font-size:12px;color:#64748b">' +
-                                            meshSizeLabel(v) + ' &bull; NOAA MRMS daily max' +
-                                        '</div>'
+                                        '<div style="font-size:15px;font-weight:700;margin-bottom:3px">' + v.toFixed(2) + '" MESH</div>' +
+                                        '<div style="font-size:12px;color:#64748b">' + meshSizeLabel(v) + ' &bull; NOAA MRMS daily max</div>'
                                     )
                                     .openOn(map);
                             });
