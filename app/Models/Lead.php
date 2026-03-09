@@ -110,6 +110,6 @@ class Lead extends Model
 
     public function isConverted(): bool
     {
-        return $this->status === LeadStatus::Converted;
+        return ! is_null($this->converted_work_order_id);
     }
 }

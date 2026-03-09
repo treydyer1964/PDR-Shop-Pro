@@ -108,11 +108,11 @@ class LeadShow extends Component
         }
 
         // Mark lead as converted
-        $this->lead->update(['status' => LeadStatus::Converted->value]);
+        $this->lead->update(['status' => LeadStatus::Contract->value]);
         $this->lead->statusLogs()->create([
             'tenant_id'  => $user->tenant_id,
             'lead_id'    => $this->lead->id,
-            'status'     => LeadStatus::Converted->value,
+            'status'     => LeadStatus::Contract->value,
             'notes'      => 'Converted to work order.',
             'changed_by' => $user->id,
         ]);
