@@ -161,9 +161,9 @@
                 <div class="space-y-2">
                     @forelse($this->statusLogs as $log)
                     <div class="flex items-start gap-2.5">
-                        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {{ $log->status->dotClasses() }}"></span>
+                        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {{ $log->statusDotClasses() }}"></span>
                         <div>
-                            <p class="text-sm font-medium text-slate-700">{{ $log->status->label() }}</p>
+                            <p class="text-sm font-medium text-slate-700">{{ $log->statusLabel() }}</p>
                             <p class="text-xs text-slate-400">
                                 {{ $log->created_at->format('M j, Y g:ia') }}
                                 @if($log->changedBy) · {{ $log->changedBy->name }} @endif

@@ -12,9 +12,23 @@ class LeadStatusLog extends Model
         'tenant_id', 'lead_id', 'status', 'notes', 'changed_by',
     ];
 
-    protected $casts = [
-        'status' => LeadStatus::class,
-    ];
+    // No enum cast — status is a plain string so old log entries don't blow up.
+
+    public function statusEnum(): ?LeadStatus
+    {
+        return LeadStatus::tryFrom($this->status ?? '');
+    }
+
+    public function statusLabel(): string
+    {
+        return $this->statusEnum()?->label()
+            ?? ucwords(str_replace('_', ' ', $this->status ?? ''));
+    }
+
+    public function statusDotClasses(): string
+    {
+        return $this->statusEnum()?->dotClasses() ?? 'bg-slate-400';
+    }
 
     public function lead(): BelongsTo
     {
