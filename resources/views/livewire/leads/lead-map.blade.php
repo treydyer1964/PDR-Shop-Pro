@@ -1,45 +1,104 @@
 <div>
+    @php
+        $today         = now()->toDateString();
+        $weekStart     = now()->startOfWeek()->toDateString();
+        $monthStart    = now()->startOfMonth()->toDateString();
+        $yearStart     = now()->startOfYear()->toDateString();
+        $lastYearStart = now()->subYear()->startOfYear()->toDateString();
+        $lastYearEnd   = now()->subYear()->endOfYear()->toDateString();
+
+        $presetActive  = fn(string $from, string $to = '') =>
+            $filterDateFrom === $from && $filterDateTo === $to;
+        $activeClass   = 'bg-slate-900 text-white border-slate-900';
+        $inactiveClass = 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+
+        // Is a custom date active (no preset matches)?
+        $isCustomDate = ($filterDateFrom || $filterDateTo)
+            && ! $presetActive($today, '')
+            && ! $presetActive($weekStart, '')
+            && ! $presetActive($monthStart, '')
+            && ! $presetActive($yearStart, '')
+            && ! $presetActive($lastYearStart, $lastYearEnd);
+    @endphp
+
     {{-- Server-side filters (trigger Livewire re-render + Leaflet reinit via wire:key) --}}
-    <div class="mb-3 flex flex-wrap items-center gap-3">
+    <div class="mb-3 space-y-2">
 
-        <select wire:model.live="filterStorm"
-                class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            <option value="">All Events</option>
-            @forelse($this->stormEvents as $storm)
-                <option value="{{ $storm->id }}">
-                    {{ $storm->name }}{{ $storm->city ? ' — ' . $storm->city . ($storm->state ? ', ' . $storm->state : '') : '' }}
-                </option>
-            @empty
-                <option value="" disabled>No events yet</option>
-            @endforelse
-        </select>
+        {{-- Row 1: Date Range presets --}}
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-medium text-slate-400">Date:</span>
 
-        @if(!auth()->user()->isFieldStaff())
-        <select wire:model.live="filterRep"
-                class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            <option value="">All Reps</option>
-            @foreach($this->reps as $rep)
-                <option value="{{ $rep->id }}">{{ $rep->name }}</option>
-            @endforeach
-        </select>
-        @endif
+            <button wire:click="setDatePreset('all')"
+                    class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive('', '') ? $activeClass : $inactiveClass }}">
+                All
+            </button>
+            <button wire:click="setDatePreset('today')"
+                    class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($today, '') ? $activeClass : $inactiveClass }}">
+                Today
+            </button>
+            <button wire:click="setDatePreset('week')"
+                    class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($weekStart, '') ? $activeClass : $inactiveClass }}">
+                This Week
+            </button>
+            <button wire:click="setDatePreset('month')"
+                    class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($monthStart, '') ? $activeClass : $inactiveClass }}">
+                This Month
+            </button>
+            <button wire:click="setDatePreset('year')"
+                    class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($yearStart, '') ? $activeClass : $inactiveClass }}">
+                This Year
+            </button>
+            <button wire:click="setDatePreset('lastyear')"
+                    class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($lastYearStart, $lastYearEnd) ? $activeClass : $inactiveClass }}">
+                Last Year
+            </button>
 
-        <div class="flex items-center gap-1.5">
-            <input wire:model.live="filterDateFrom" type="date"
-                   class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
-            <span class="text-xs text-slate-400">–</span>
-            <input wire:model.live="filterDateTo" type="date"
-                   class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
+            {{-- Custom: always visible small inputs --}}
+            <div x-data="{ open: @js($isCustomDate) }" class="flex items-center gap-1.5">
+                <button @click="open = !open"
+                        class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $isCustomDate ? $activeClass : $inactiveClass }}">
+                    Custom
+                </button>
+                <div x-show="open" x-cloak class="flex items-center gap-1.5">
+                    <input wire:model.live="filterDateFrom" type="date"
+                           class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
+                    <span class="text-xs text-slate-400">–</span>
+                    <input wire:model.live="filterDateTo" type="date"
+                           class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
+                    @if($filterDateFrom || $filterDateTo)
+                    <button wire:click="clearDateFilter" class="text-xs text-slate-400 hover:text-red-500 transition-colors">✕</button>
+                    @endif
+                </div>
+            </div>
         </div>
 
-        @if($filterDateFrom || $filterDateTo)
-        <button wire:click="clearDateFilter" class="text-xs text-slate-400 hover:text-red-500 transition-colors">
-            ✕ Clear date
-        </button>
-        @endif
+        {{-- Row 2: Rep + Storm selects --}}
+        <div class="flex flex-wrap items-center gap-3">
+            @if(!auth()->user()->isFieldStaff())
+            <select wire:model.live="filterRep"
+                    class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <option value="">All Reps</option>
+                @foreach($this->reps as $rep)
+                    <option value="{{ $rep->id }}">{{ $rep->name }}</option>
+                @endforeach
+            </select>
+            @endif
+
+            <select wire:model.live="filterStorm"
+                    class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <option value="">All Events</option>
+                @forelse($this->stormEvents as $storm)
+                    <option value="{{ $storm->id }}">
+                        {{ $storm->name }}{{ $storm->city ? ' — ' . $storm->city . ($storm->state ? ', ' . $storm->state : '') : '' }}
+                    </option>
+                @empty
+                    <option value="" disabled>No events yet</option>
+                @endforelse
+            </select>
+        </div>
     </div>
 
-    {{-- Status filter strip + map (wire:key forces Leaflet reinit when server-side filters change) --}}
+    {{-- Pin Type filter strip + map (wire:key forces Leaflet reinit when server-side filters change) --}}
     <div
         wire:key="lead-map-{{ $this->filterStorm }}-{{ $this->filterRep }}-{{ $this->filterDateFrom }}-{{ $this->filterDateTo }}"
         x-data="{ filter: '' }"
@@ -48,8 +107,9 @@
         x-init="$nextTick(() => initLeadMap($el, filter))"
         id="lead-map-root"
     >
-        {{-- Filter buttons --}}
+        {{-- Pin Type filter buttons --}}
         <div class="mb-3 flex flex-wrap items-center gap-2">
+            <span class="text-xs font-medium text-slate-400">Pin Type:</span>
             <button
                 @click="filter = ''; window.leadMapSetFilter('')"
                 :class="filter === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'"

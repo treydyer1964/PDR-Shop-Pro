@@ -25,6 +25,22 @@ class LeadMap extends Component
     #[Url(as: 'to')]
     public string $filterDateTo = '';
 
+    public function setDatePreset(string $preset): void
+    {
+        match ($preset) {
+            'all'       => [$this->filterDateFrom, $this->filterDateTo] = ['', ''],
+            'today'     => [$this->filterDateFrom, $this->filterDateTo] = [now()->toDateString(), ''],
+            'week'      => [$this->filterDateFrom, $this->filterDateTo] = [now()->startOfWeek()->toDateString(), ''],
+            'month'     => [$this->filterDateFrom, $this->filterDateTo] = [now()->startOfMonth()->toDateString(), ''],
+            'year'      => [$this->filterDateFrom, $this->filterDateTo] = [now()->startOfYear()->toDateString(), ''],
+            'lastyear'  => [$this->filterDateFrom, $this->filterDateTo] = [
+                now()->subYear()->startOfYear()->toDateString(),
+                now()->subYear()->endOfYear()->toDateString(),
+            ],
+            default => null,
+        };
+    }
+
     public function clearDateFilter(): void
     {
         $this->filterDateFrom = '';
@@ -76,7 +92,8 @@ class LeadMap extends Component
             'name'        => $lead->hasName() ? $lead->fullName() : '',
             'status'      => $lead->status->value,
             'statusLabel' => $overrides[$lead->status->value] ?? $lead->status->label(),
-            'color'       => $this->statusColor($lead->status),
+            'color'       => $lead->status->pinColor(),
+            'stroke'      => $lead->status->pinStroke(),
             'damageLabel' => $lead->damageLevelLabel(),
             'phone'       => $lead->phone,
             'address'     => $lead->locationLabel(),
@@ -130,19 +147,6 @@ class LeadMap extends Component
     public function statuses(): array
     {
         return LeadStatus::cases();
-    }
-
-    private function statusColor(LeadStatus $status): string
-    {
-        return match($status) {
-            LeadStatus::New            => '#3b82f6',
-            LeadStatus::Contacted      => '#eab308',
-            LeadStatus::AppointmentSet => '#22c55e',
-            LeadStatus::NoAnswer       => '#94a3b8',
-            LeadStatus::NotInterested  => '#ef4444',
-            LeadStatus::Converted      => '#a855f7',
-            LeadStatus::Lost           => '#64748b',
-        };
     }
 
     public function render()

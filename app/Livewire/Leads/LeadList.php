@@ -34,17 +34,38 @@ class LeadList extends Component
     #[Url(as: 'q')]
     public string $search = '';
 
-    public function updatedFilterStatus(): void   { $this->resetPage(); }
-    public function updatedFilterRep(): void      { $this->resetPage(); }
-    public function updatedFilterStorm(): void    { $this->resetPage(); }
-    public function updatedFilterDateFrom(): void { $this->resetPage(); }
-    public function updatedFilterDateTo(): void   { $this->resetPage(); }
-    public function updatedSearch(): void         { $this->resetPage(); }
+    #[Url(as: 'contact')]
+    public bool $filterHasContact = false;
+
+    public function updatedFilterStatus(): void     { $this->resetPage(); }
+    public function updatedFilterRep(): void        { $this->resetPage(); }
+    public function updatedFilterStorm(): void      { $this->resetPage(); }
+    public function updatedFilterDateFrom(): void   { $this->resetPage(); }
+    public function updatedFilterDateTo(): void     { $this->resetPage(); }
+    public function updatedSearch(): void           { $this->resetPage(); }
+    public function updatedFilterHasContact(): void { $this->resetPage(); }
 
     public function clearDateFilter(): void
     {
         $this->filterDateFrom = '';
         $this->filterDateTo   = '';
+        $this->resetPage();
+    }
+
+    public function setDatePreset(string $preset): void
+    {
+        match ($preset) {
+            'all'      => [$this->filterDateFrom, $this->filterDateTo] = ['', ''],
+            'today'    => [$this->filterDateFrom, $this->filterDateTo] = [now()->toDateString(), ''],
+            'week'     => [$this->filterDateFrom, $this->filterDateTo] = [now()->startOfWeek()->toDateString(), ''],
+            'month'    => [$this->filterDateFrom, $this->filterDateTo] = [now()->startOfMonth()->toDateString(), ''],
+            'year'     => [$this->filterDateFrom, $this->filterDateTo] = [now()->startOfYear()->toDateString(), ''],
+            'lastyear' => [$this->filterDateFrom, $this->filterDateTo] = [
+                now()->subYear()->startOfYear()->toDateString(),
+                now()->subYear()->endOfYear()->toDateString(),
+            ],
+            default => null,
+        };
         $this->resetPage();
     }
 
@@ -61,7 +82,12 @@ class LeadList extends Component
             ->when($this->filterRep,      fn($q) => $q->where('assigned_to', $this->filterRep))
             ->when($this->filterStorm,    fn($q) => $q->where('storm_event_id', $this->filterStorm))
             ->when($this->filterDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->filterDateFrom))
-            ->when($this->filterDateTo,   fn($q) => $q->whereDate('created_at', '<=', $this->filterDateTo))
+            ->when($this->filterDateTo,      fn($q) => $q->whereDate('created_at', '<=', $this->filterDateTo))
+            ->when($this->filterHasContact, fn($q) => $q->where(fn($q2) =>
+                $q2->whereNotNull('first_name')
+                   ->orWhereNotNull('last_name')
+                   ->orWhereNotNull('phone')
+            ))
             ->when($this->search,       fn($q) => $q->where(function($q2) {
                 $q2->where('first_name', 'like', "%{$this->search}%")
                    ->orWhere('last_name',  'like', "%{$this->search}%")

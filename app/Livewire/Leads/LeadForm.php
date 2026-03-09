@@ -25,7 +25,7 @@ class LeadForm extends Component
     public string $zip               = '';
     public string $lat               = '';
     public string $lng               = '';
-    public string $status            = 'new';
+    public string $status            = 'not_contacted';
     public string $source            = 'door_to_door';
     public string $job_type_interest = 'insurance';
     public string $vehicle_year      = '';

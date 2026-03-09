@@ -36,52 +36,73 @@
         </select>
     </div>
 
-    {{-- Date filter row --}}
+    {{-- Date + contact filter row --}}
     <div class="mb-4 flex flex-wrap items-center gap-2">
-        {{-- Quick presets --}}
-        <span class="text-xs font-medium text-slate-400 mr-1">Date:</span>
         @php
-            $today     = now()->toDateString();
-            $yesterday = now()->subDay()->toDateString();
-            $weekStart = now()->startOfWeek()->toDateString();
-            $monthStart= now()->startOfMonth()->toDateString();
+            $today         = now()->toDateString();
+            $weekStart     = now()->startOfWeek()->toDateString();
+            $monthStart    = now()->startOfMonth()->toDateString();
+            $yearStart     = now()->startOfYear()->toDateString();
+            $lastYearStart = now()->subYear()->startOfYear()->toDateString();
+            $lastYearEnd   = now()->subYear()->endOfYear()->toDateString();
+
+            $presetActive = fn(string $from, string $to = '') =>
+                $filterDateFrom === $from && $filterDateTo === $to;
+
+            $activeClass   = 'bg-slate-900 text-white border-slate-900';
+            $inactiveClass = 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
         @endphp
-        <button @click="$wire.set('filterDateFrom', '{{ $today }}'); $wire.set('filterDateTo', '');"
-                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors
-                    {{ $filterDateFrom === $today && $filterDateTo === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+
+        <span class="text-xs font-medium text-slate-400">Date:</span>
+
+        <button wire:click="setDatePreset('all')"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive('', '') ? $activeClass : $inactiveClass }}">
+            All
+        </button>
+        <button wire:click="setDatePreset('today')"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($today, '') ? $activeClass : $inactiveClass }}">
             Today
         </button>
-        <button @click="$wire.set('filterDateFrom', '{{ $yesterday }}'); $wire.set('filterDateTo', '{{ $yesterday }}');"
-                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors
-                    {{ $filterDateFrom === $yesterday && $filterDateTo === $yesterday ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
-            Yesterday
-        </button>
-        <button @click="$wire.set('filterDateFrom', '{{ $weekStart }}'); $wire.set('filterDateTo', '');"
-                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors
-                    {{ $filterDateFrom === $weekStart && $filterDateTo === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+        <button wire:click="setDatePreset('week')"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($weekStart, '') ? $activeClass : $inactiveClass }}">
             This Week
         </button>
-        <button @click="$wire.set('filterDateFrom', '{{ $monthStart }}'); $wire.set('filterDateTo', '');"
-                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors
-                    {{ $filterDateFrom === $monthStart && $filterDateTo === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+        <button wire:click="setDatePreset('month')"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($monthStart, '') ? $activeClass : $inactiveClass }}">
             This Month
+        </button>
+        <button wire:click="setDatePreset('year')"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($yearStart, '') ? $activeClass : $inactiveClass }}">
+            This Year
+        </button>
+        <button wire:click="setDatePreset('lastyear')"
+                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {{ $presetActive($lastYearStart, $lastYearEnd) ? $activeClass : $inactiveClass }}">
+            Last Year
         </button>
 
         {{-- Custom range --}}
-        <div class="flex items-center gap-1.5 ml-1">
+        <div class="flex items-center gap-1.5">
             <input wire:model.live="filterDateFrom" type="date"
+                   placeholder="From"
                    class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
             <span class="text-xs text-slate-400">–</span>
             <input wire:model.live="filterDateTo" type="date"
+                   placeholder="To"
                    class="rounded-lg border-slate-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1" />
         </div>
 
         @if($filterDateFrom || $filterDateTo)
-        <button wire:click="clearDateFilter"
-                class="text-xs text-slate-400 hover:text-red-500 transition-colors">
+        <button wire:click="clearDateFilter" class="text-xs text-slate-400 hover:text-red-500 transition-colors">
             ✕ Clear date
         </button>
         @endif
+
+        {{-- Has contact info toggle --}}
+        <label class="ml-2 flex cursor-pointer items-center gap-1.5 text-xs font-medium text-slate-500 select-none">
+            <input wire:model.live="filterHasContact" type="checkbox"
+                   class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+            Has contact info
+        </label>
     </div>
 
     {{-- Lead cards --}}

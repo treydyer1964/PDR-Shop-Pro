@@ -40,10 +40,12 @@
                 } catch (e) {}
             });
 
-            function makePinIcon(color) {
+            function makePinIcon(color, stroke) {
+                var strokeColor = stroke || 'white';
+                var dotFill     = (strokeColor === 'white') ? 'white' : '#334155';
                 var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="28" height="40">'
-                    + '<path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 26 14 26S28 24.5 28 14C28 6.268 21.732 0 14 0z" fill="' + color + '" stroke="white" stroke-width="2"/>'
-                    + '<circle cx="14" cy="14" r="5" fill="white" opacity="0.85"/>'
+                    + '<path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 26 14 26S28 24.5 28 14C28 6.268 21.732 0 14 0z" fill="' + color + '" stroke="' + strokeColor + '" stroke-width="2"/>'
+                    + '<circle cx="14" cy="14" r="5" fill="' + dotFill + '" opacity="0.85"/>'
                     + '</svg>';
                 return L.divIcon({
                     html:        svg,
@@ -75,7 +77,7 @@
                 allMarkers = [];
                 var visible = filter ? leads.filter(function (l) { return l.status === filter; }) : leads;
                 visible.forEach(function (lead) {
-                    var m = L.marker([lead.lat, lead.lng], { icon: makePinIcon(lead.color) });
+                    var m = L.marker([lead.lat, lead.lng], { icon: makePinIcon(lead.color, lead.stroke) });
                     m.bindPopup(makePopup(lead));
                     // Stop click from propagating to map (prevents create-lead trigger)
                     m.on('click', function (e) { L.DomEvent.stopPropagation(e); });
