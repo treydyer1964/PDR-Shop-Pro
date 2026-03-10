@@ -16,9 +16,9 @@ class ProcessMeshData extends Command
 
     protected $description = 'Download and render an MRMS MESH GRIB2 frame, building a daily max swath';
 
-    // MRMS base URL (freely accessible, no auth required)
-    // Note: /data/2D/MESH/ redirects to /2D/MESH/ — use the canonical path
-    const MRMS_BASE = 'https://mrms.ncep.noaa.gov/2D/MESH/';
+    // MRMS_Max_1440min = rolling 24-hour maximum MESH (correct daily swath product)
+    // Individual MESH.latest is only an instantaneous snapshot — wrong for daily swaths
+    const MRMS_BASE = 'https://mrms.ncep.noaa.gov/2D/MESH_Max_1440min/';
 
     // CONUS image overlay bounds [SW lat, SW lng, NE lat, NE lng]
     // MRMS MESH CONUS grid: lat 20.005–55.005, lon -129.995–(-60.005)
@@ -96,40 +96,40 @@ class ProcessMeshData extends Command
 
     /**
      * Resolve the GRIB2.gz URL for a given date.
-     * For today: use the `.latest.grib2.gz` symlink (always current).
-     * For historical: list the NOAA directory and find the last frame.
+     * MESH_Max_1440min has no .latest symlink — always list the directory.
+     * For today: get the most recent file available (rolling 24-h max).
+     * For historical: filter files matching the requested date.
+     * NOAA keeps ~48 h of files; anything older won't be available.
      */
     private function resolveUrl(string $date): ?string
     {
-        $today = now()->subHours(12)->toDateString();
-
-        if ($date === $today) {
-            // NOAA publishes a "latest" symlink — always points to current frame
-            return self::MRMS_BASE . 'MRMS_MESH.latest.grib2.gz';
-        }
-
-        // Historical: try to list directory and find a frame for that date
-        $datePart = str_replace('-', '', $date); // 20260305
-        $listUrl  = self::MRMS_BASE;
-
-        $html = @file_get_contents($listUrl);
+        $html = @file_get_contents(self::MRMS_BASE);
         if ($html === false) {
-            Log::warning('mesh:process could not fetch MRMS directory listing');
+            Log::warning('mesh:process could not fetch MRMS_Max_1440min directory listing');
             return null;
         }
 
-        // Extract filenames matching MRMS_MESH_00.50_YYYYMMDD-HHMMSS.grib2.gz
-        preg_match_all('/MRMS_MESH_00\.50_(\d{8}-\d{6})\.grib2\.gz/', $html, $matches);
+        // Filenames: MRMS_MESH_Max_1440min_00.50_YYYYMMDD-HHMMSS.grib2.gz
+        preg_match_all('/MRMS_MESH_Max_1440min_00\.50_(\d{8}-\d{6})\.grib2\.gz/', $html, $matches);
 
-        $frames = array_filter($matches[1], fn($ts) => str_starts_with($ts, $datePart));
-        if (empty($frames)) {
-            return null; // NOAA only keeps ~24–48 h; older data won't be available
+        if (empty($matches[1])) return null;
+
+        $today    = now()->subHours(12)->toDateString();
+        $datePart = str_replace('-', '', $date);
+
+        if ($date === $today) {
+            // Pick the most recent file in the directory (highest timestamp)
+            $frames = $matches[1];
+        } else {
+            // Historical: only files matching the requested date
+            $frames = array_filter($matches[1], fn($ts) => str_starts_with($ts, $datePart));
         }
 
-        // Use the last frame of the day (most complete swath for historical runs)
+        if (empty($frames)) return null;
+
         sort($frames);
         $lastFrame = end($frames);
-        return self::MRMS_BASE . "MRMS_MESH_00.50_{$lastFrame}.grib2.gz";
+        return self::MRMS_BASE . "MRMS_MESH_Max_1440min_00.50_{$lastFrame}.grib2.gz";
     }
 
     private function findPython(): string

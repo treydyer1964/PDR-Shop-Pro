@@ -51,6 +51,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c-.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/>
                     </svg>
                     MESH Swath
+                    @if($showMesh && $this->meshRecord && $this->meshRecord->max_size_inches > 0)
+                        <span class="text-xs opacity-75">· {{ number_format($this->meshRecord->max_size_inches, 2) }}"</span>
+                    @endif
                 </button>
             </div>
         </div>
@@ -235,6 +238,9 @@
              data-show-radar="{{ $showRadar ? '1' : '0' }}"
              data-show-warnings="{{ $showWarnings ? '1' : '0' }}"
              data-show-mesh="{{ $showMesh ? '1' : '0' }}"
+             data-mesh-url="{{ $this->meshSwathUrl ?? '' }}"
+             data-mesh-cells-url="{{ $showMesh ? ($this->meshCellsUrl ?? '') : '' }}"
+             data-mesh-max="{{ $this->meshRecord?->max_size_inches ?? '' }}"
              x-init="$nextTick(() => initHailMap($el))"
              id="hail-map-root">
 
@@ -262,8 +268,11 @@
                         <span class="text-slate-300">(historical)</span>
                     @endif
                 @endif
-                @if($showMesh)
-                    &middot; MESH Swath: Iowa Environmental Mesonet / MRMS
+                @if($showMesh && $this->meshSwathUrl)
+                    &middot; MESH Swath: NOAA MRMS
+                    <span class="text-slate-300">(peak {{ number_format($this->meshRecord->max_size_inches, 2) }}"&nbsp;· 24-h max)</span>
+                @elseif($showMesh && !$this->meshSwathUrl)
+                    &middot; MESH Swath: <span class="text-slate-300">captured going forward — not available for past dates</span>
                 @endif
             </p>
         </div>

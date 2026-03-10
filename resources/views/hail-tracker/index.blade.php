@@ -1,6 +1,9 @@
 <x-app-layout>
     <x-slot name="headScripts">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+        <style>
+            .mesh-pixelated { image-rendering: pixelated; }
+        </style>
     </x-slot>
 
     <x-slot name="footerScripts">
@@ -88,21 +91,90 @@
                 }).addTo(map);
             });
 
-            // ── MESH hail swath overlay (IEM / MRMS) ─────────────────────────────
-            // Uses Iowa Environmental Mesonet WMS — the same source as Hailpoint and
-            // other swath apps. Works for any historical date without local processing.
+            // ── MESH hail swath overlay (NOAA MRMS 24-h max, captured locally) ──
+            // Rendered from MRMS_MESH_Max_1440min — the 24-hour rolling maximum.
+            // Captured and saved by mesh:process (runs every 30 min via scheduler).
+            // Only available for dates where the pipeline captured data in time.
 
-            if (showMesh) {
-                L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/mrms/mesh.cgi', {
-                    layers:      'mrms_mesh',
-                    format:      'image/png',
-                    transparent: true,
-                    opacity:     0.75,
-                    version:     '1.1.1',
-                    time:        selectedDate + 'T00:00:00Z',
-                    attribution: 'MESH Swath: Iowa Environmental Mesonet / MRMS',
-                    zIndex:      4
+            if (showMesh && meshUrl) {
+                var meshBounds = [[20.005, -129.995], [54.995, -60.005]];
+                L.imageOverlay(meshUrl, meshBounds, {
+                    opacity:     0.80,
+                    zIndex:      4,
+                    className:   'mesh-pixelated',
+                    attribution: 'MESH: NOAA MRMS'
                 }).addTo(map);
+
+                if (meshCellsUrl) {
+                    fetch(meshCellsUrl)
+                        .then(function(r) { return r.json(); })
+                        .then(function(cells) {
+                            if (!cells || !cells.length) return;
+
+                            var meshLookup = {};
+                            cells.forEach(function(cell) {
+                                meshLookup[cell.r + ',' + cell.c] = cell.v;
+                            });
+
+                            function lookupMesh(lat, lng) {
+                                var r0 = Math.round((54.995 - lat)  / 0.1);
+                                var c0 = Math.round((lng + 129.995) / 0.1);
+                                var best = null, bestD = Infinity;
+                                for (var dr = -5; dr <= 5; dr++) {
+                                    for (var dc = -5; dc <= 5; dc++) {
+                                        var val = meshLookup[(r0 + dr) + ',' + (c0 + dc)];
+                                        if (val !== undefined) {
+                                            var dist = dr * dr + dc * dc;
+                                            if (dist < bestD) { bestD = dist; best = val; }
+                                        }
+                                    }
+                                }
+                                return best;
+                            }
+
+                            var meshInfo = L.control({ position: 'bottomright' });
+                            meshInfo.onAdd = function() {
+                                this._div = L.DomUtil.create('div', '');
+                                this._div.style.cssText =
+                                    'background:rgba(15,23,42,0.90);color:#f8fafc;' +
+                                    'padding:8px 12px;border-radius:8px;font-size:13px;' +
+                                    'line-height:1.5;min-width:130px;display:none;' +
+                                    'pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,0.35);' +
+                                    'border:1px solid rgba(255,255,255,0.10)';
+                                return this._div;
+                            };
+                            meshInfo.addTo(map);
+                            window._meshInfoControl = meshInfo;
+
+                            map.on('mousemove', function(e) {
+                                var v = lookupMesh(e.latlng.lat, e.latlng.lng);
+                                if (v === null) {
+                                    meshInfo._div.style.display = 'none';
+                                } else {
+                                    meshInfo._div.style.display = 'block';
+                                    meshInfo._div.innerHTML =
+                                        '<div style="font-size:10px;color:#94a3b8;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px">MESH Swath</div>' +
+                                        '<div style="font-size:18px;font-weight:700;line-height:1">' + v.toFixed(2) + '"</div>' +
+                                        '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + meshSizeLabel(v) + '</div>';
+                                }
+                            });
+
+                            map.on('mouseout', function() { meshInfo._div.style.display = 'none'; });
+
+                            map.on('click', function(e) {
+                                var v = lookupMesh(e.latlng.lat, e.latlng.lng);
+                                if (v === null) return;
+                                L.popup({ maxWidth: 220 })
+                                    .setLatLng(e.latlng)
+                                    .setContent(
+                                        '<div style="font-size:15px;font-weight:700;margin-bottom:3px">' + v.toFixed(2) + '" MESH</div>' +
+                                        '<div style="font-size:12px;color:#64748b">' + meshSizeLabel(v) + ' &bull; NOAA MRMS 24-h max</div>'
+                                    )
+                                    .openOn(map);
+                            });
+                        })
+                        .catch(function() {});
+                }
             }
 
             // ── NWS active warnings overlay ───────────────────────────────────────

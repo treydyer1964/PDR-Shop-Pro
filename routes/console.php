@@ -12,5 +12,5 @@ Artisan::command('inspire', function () {
 Schedule::command('hail:fetch-reports')->hourly()
     ->then(fn() => Artisan::call('hail:check-alerts'));
 
-// MRMS MESH: process latest GRIB2 frame every 10 minutes (builds daily max swath)
-Schedule::command('mesh:process')->everyTenMinutes();
+// MRMS MESH: download MESH_Max_1440min (24-h rolling max) every 30 min — matches NOAA update frequency
+Schedule::command('mesh:process')->everyThirtyMinutes();
