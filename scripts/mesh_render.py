@@ -138,17 +138,19 @@ def update_accumulator(grid_in, acc_path):
 
 def render_png(grid_in, output_path):
     """
-    Render MESH grid as a per-pixel transparent RGBA PNG using Pillow.
+    Render MESH grid as a smooth transparent RGBA PNG using Pillow.
 
     Each grid cell at or above the minimum threshold is painted with its
-    size-band RGBA color. A 1-pixel dark outline is drawn around the outer
-    boundary of each colored region (outside border), making patches visible
-    against the light OSM basemap.
+    size-band RGBA color. A Gaussian blur (radius 1.5) is applied after
+    coloring to smooth the blocky 0.1° pixel edges into soft contour-like
+    gradients, matching the visual style of apps like Hailpoint.
 
     Grid orientation: row 0 = north (55°N), col 0 = west (−130°W).
     Leaflet imageOverlay stretches from SW→NE, so row 0 must be at the TOP
     of the image — the numpy array is already in this orientation (no flip).
     """
+    from PIL import ImageFilter
+
     h, w = grid_in.shape
 
     # Start fully transparent
@@ -160,7 +162,11 @@ def render_png(grid_in, output_path):
         rgba[mask] = color
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    Image.fromarray(rgba, 'RGBA').save(output_path, format='PNG')
+
+    # Apply Gaussian blur to smooth the hard pixel boundaries into soft gradients
+    img = Image.fromarray(rgba, 'RGBA')
+    img = img.filter(ImageFilter.GaussianBlur(radius=1.5))
+    img.save(output_path, format='PNG')
 
     return output_path
 

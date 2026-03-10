@@ -101,7 +101,7 @@
                 L.imageOverlay(meshUrl, meshBounds, {
                     opacity:     0.80,
                     zIndex:      4,
-                    className:   'mesh-pixelated',
+                    interactive: false,
                     attribution: 'MESH: NOAA MRMS'
                 }).addTo(map);
 
@@ -120,8 +120,8 @@
                                 var r0 = Math.round((54.995 - lat)  / 0.1);
                                 var c0 = Math.round((lng + 129.995) / 0.1);
                                 var best = null, bestD = Infinity;
-                                for (var dr = -5; dr <= 5; dr++) {
-                                    for (var dc = -5; dc <= 5; dc++) {
+                                for (var dr = -15; dr <= 15; dr++) {
+                                    for (var dc = -15; dc <= 15; dc++) {
                                         var val = meshLookup[(r0 + dr) + ',' + (c0 + dc)];
                                         if (val !== undefined) {
                                             var dist = dr * dr + dc * dc;
