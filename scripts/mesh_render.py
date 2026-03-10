@@ -49,8 +49,8 @@ OUT_H = 350   # pixels
 
 # ── Size bands: lower bound (inches), RGBA color ──────────────────────────────
 # Bands are applied in order; each pixel gets the color of its highest bracket.
-# Alpha 220 ≈ 86% opacity (0.86 × 255).
-ALPHA = 220
+# Alpha 255 = fully opaque in the PNG; opacity controlled by Leaflet overlay.
+ALPHA = 255
 
 BANDS = [
     (0.75,  (255, 255, 178, ALPHA)),  # 0.75–1.00"  pale yellow
