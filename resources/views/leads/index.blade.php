@@ -2,6 +2,7 @@
     @php $isMapView = request()->query('mapview') || ($forceMapView ?? false); @endphp
     <x-slot name="headScripts">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
         <style>
             @keyframes loc-pulse {
                 0%   { transform: scale(0.5); opacity: 0.6; }
@@ -11,6 +12,7 @@
     </x-slot>
     <x-slot name="footerScripts">
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
         <script>
         window.initLeadMap = function (el) {
             var leads       = JSON.parse(el.dataset.leads       || '[]');
@@ -78,19 +80,38 @@
                 return html;
             }
 
-            var allMarkers = [];
+            // Cluster group — Spotio-style black circles with white count
+            var clusterGroup = L.markerClusterGroup({
+                maxClusterRadius: 50,
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true,
+                spiderfyOnMaxZoom: true,
+                iconCreateFunction: function (cluster) {
+                    var count = cluster.getChildCount();
+                    var size  = count < 10 ? 36 : count < 100 ? 44 : 52;
+                    var fs    = count < 10 ? 14 : count < 100 ? 13 : 11;
+                    return L.divIcon({
+                        html: '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;'
+                            + 'background:#1e293b;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.45);'
+                            + 'display:flex;align-items:center;justify-content:center;">'
+                            + '<span style="color:white;font-weight:700;font-size:' + fs + 'px;line-height:1;">' + count + '</span>'
+                            + '</div>',
+                        className:  '',
+                        iconSize:   [size, size],
+                        iconAnchor: [size / 2, size / 2]
+                    });
+                }
+            });
+            map.addLayer(clusterGroup);
 
             function renderMarkers(filter) {
-                allMarkers.forEach(function (m) { m.remove(); });
-                allMarkers = [];
+                clusterGroup.clearLayers();
                 var visible = filter ? leads.filter(function (l) { return l.status === filter; }) : leads;
                 visible.forEach(function (lead) {
                     var m = L.marker([lead.lat, lead.lng], { icon: makePinIcon(lead.color, lead.stroke) });
                     m.bindPopup(makePopup(lead));
-                    // Stop click from propagating to map (prevents create-lead trigger)
                     m.on('click', function (e) { L.DomEvent.stopPropagation(e); });
-                    m.addTo(map);
-                    allMarkers.push(m);
+                    clusterGroup.addLayer(m);
                 });
             }
 
