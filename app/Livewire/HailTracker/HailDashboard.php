@@ -7,7 +7,6 @@ use App\Models\HailAlertSubscription;
 use App\Models\HailEvent;
 use App\Models\HailEventWatch;
 use App\Models\HailReport;
-use App\Models\MeshDailyRecord;
 use App\Models\StormEvent;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Attributes\Computed;
@@ -223,31 +222,6 @@ class HailDashboard extends Component
             'address'     => $sub->home_address,
             'radiusMiles' => $sub->radius_miles,
         ];
-    }
-
-    #[Computed]
-    public function meshRecord(): ?MeshDailyRecord
-    {
-        return MeshDailyRecord::where('record_date', $this->selectedDate)->first();
-    }
-
-    #[Computed]
-    public function meshSwathUrl(): ?string
-    {
-        return $this->meshRecord?->pngUrl();
-    }
-
-    #[Computed]
-    public function meshCellsUrl(): ?string
-    {
-        $record = $this->meshRecord;
-        if (!$record || !$record->png_path) return null;
-
-        $dir      = dirname($record->png_path);   // mesh/2026-03-05
-        $jsonPath = \Illuminate\Support\Facades\Storage::disk('public')->path($dir . '/data.json');
-        if (!file_exists($jsonPath)) return null;
-
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($dir . '/data.json');
     }
 
     #[Computed]
