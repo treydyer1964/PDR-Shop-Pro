@@ -22,12 +22,13 @@
                 window._leadMap && window._leadMap.remove();
             }
 
-            var map = L.map('lead-map-container', { maxZoom: 19 });
+            var map = L.map('lead-map-container', { maxZoom: 20 });
             window._leadMap = map;
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                maxZoom: 19
+            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                attribution: '&copy; Google',
+                maxZoom: 20,
+                subdomains: ['mt0','mt1','mt2','mt3']
             }).addTo(map);
 
             territories.forEach(function (t) {
