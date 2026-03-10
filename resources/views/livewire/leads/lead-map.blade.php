@@ -24,7 +24,7 @@
 
     {{-- Compact filter bar: all dropdowns in one row --}}
     <div
-        x-data="{ datePreset: @js($activeDatePreset) }"
+        x-data="{ datePreset: @js($activeDatePreset), pinFilter: '' }"
         class="mb-3 flex flex-wrap items-center gap-2"
     >
         {{-- Date dropdown --}}
@@ -75,29 +75,29 @@
                 <option value="" disabled>No events yet</option>
             @endforelse
         </select>
+
+        {{-- Pin Type dropdown --}}
+        <select
+            @change="pinFilter = $event.target.value; window.leadMapSetFilter && window.leadMapSetFilter(pinFilter)"
+            class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1.5">
+            <option value="">All Pin Types</option>
+            @foreach($this->statuses as $s)
+            <option value="{{ $s->value }}">{{ $s->label() }}</option>
+            @endforeach
+        </select>
+
+        <span class="text-xs text-slate-400" x-text="window.leadMapCount ? window.leadMapCount(pinFilter) : ''"></span>
     </div>
 
     {{-- Map wrapper — wire:key forces Leaflet reinit on server-side filter change --}}
     <div
         wire:key="lead-map-{{ $this->filterStorm }}-{{ $this->filterRep }}-{{ $this->filterDateFrom }}-{{ $this->filterDateTo }}"
-        x-data="{ filter: '' }"
+        x-data="{}"
         data-leads="{{ json_encode($this->allLeads) }}"
         data-territories="{{ json_encode($this->territories) }}"
-        x-init="$nextTick(() => initLeadMap($el, filter))"
+        x-init="$nextTick(() => initLeadMap($el))"
         id="lead-map-root"
     >
-        {{-- Pin Type dropdown --}}
-        <div class="mb-2 flex flex-wrap items-center gap-2">
-            <select
-                @change="filter = $event.target.value; window.leadMapSetFilter($event.target.value)"
-                class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1.5">
-                <option value="">All Pin Types</option>
-                @foreach($this->statuses as $s)
-                <option value="{{ $s->value }}">{{ $s->label() }}</option>
-                @endforeach
-            </select>
-            <span class="text-xs text-slate-400" x-text="window.leadMapCount ? window.leadMapCount(filter) : ''"></span>
-        </div>
 
         {{-- Map container --}}
         <div wire:ignore
