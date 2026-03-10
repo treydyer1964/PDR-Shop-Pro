@@ -22,12 +22,12 @@
                 window._leadMap && window._leadMap.remove();
             }
 
-            var map = L.map('lead-map-container', { maxZoom: 20 });
+            var map = L.map('lead-map-container', { maxZoom: 19 });
             window._leadMap = map;
 
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
                 attribution: 'Tiles &copy; Esri',
-                maxZoom: 20
+                maxZoom: 19
             }).addTo(map);
 
             territories.forEach(function (t) {
