@@ -99,7 +99,7 @@
             if (showMesh && meshUrl) {
                 var meshBounds = [[20.005, -129.995], [54.995, -60.005]];
                 L.imageOverlay(meshUrl, meshBounds, {
-                    opacity:     0.80,
+                    opacity:     0.90,
                     zIndex:      4,
                     interactive: false,
                     attribution: 'MESH: NOAA MRMS'
