@@ -11,6 +11,11 @@ class LeadController extends Controller
         return view('leads.index');
     }
 
+    public function map()
+    {
+        return view('leads.index', ['forceMapView' => true]);
+    }
+
     public function create()
     {
         abort_unless(auth()->user()->canCreateWorkOrders(), 403);

@@ -77,6 +77,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('leads')->name('leads.')->group(function () {
         Route::get('/',           [LeadController::class, 'index'])->name('index');
         Route::get('/create',     [LeadController::class, 'create'])->name('create');
+        Route::get('/map',        [LeadController::class, 'map'])->name('map');
         Route::get('/{lead}',     [LeadController::class, 'show'])->name('show');
         Route::get('/{lead}/edit', [LeadController::class, 'edit'])->name('edit');
     });

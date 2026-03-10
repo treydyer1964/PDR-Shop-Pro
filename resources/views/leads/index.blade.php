@@ -1,6 +1,13 @@
 <x-app-layout>
+    @php $isMapView = request()->query('mapview') || ($forceMapView ?? false); @endphp
     <x-slot name="headScripts">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+        <style>
+            @keyframes loc-pulse {
+                0%   { transform: scale(0.5); opacity: 0.6; }
+                100% { transform: scale(3);   opacity: 0; }
+            }
+        </style>
     </x-slot>
     <x-slot name="footerScripts">
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -114,6 +121,47 @@
             };
 
             setTimeout(function () { map.invalidateSize(); }, 150);
+
+            // Current location — pulsing blue dot
+            if (navigator.geolocation) {
+                var _locMarker   = null;
+                var _locAccuracy = null;
+
+                function updateLocationDot(lat, lng, accuracy) {
+                    if (_locAccuracy) { _locAccuracy.remove(); _locAccuracy = null; }
+                    if (_locMarker)   { _locMarker.remove();   _locMarker   = null; }
+
+                    // Soft accuracy ring
+                    _locAccuracy = L.circle([lat, lng], {
+                        radius:      accuracy,
+                        color:       '#3b82f6',
+                        fillColor:   '#3b82f6',
+                        fillOpacity: 0.08,
+                        weight:      1,
+                        interactive: false
+                    }).addTo(map);
+
+                    // Pulsing dot icon
+                    var dotHtml = '<div style="position:relative;width:16px;height:16px;">'
+                        + '<div style="position:absolute;inset:0;border-radius:50%;background:#3b82f6;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35);z-index:1;"></div>'
+                        + '<div style="position:absolute;inset:0;border-radius:50%;background:#3b82f6;animation:loc-pulse 2s ease-out infinite;"></div>'
+                        + '</div>';
+
+                    _locMarker = L.marker([lat, lng], {
+                        icon: L.divIcon({ html: dotHtml, className: '', iconSize: [16, 16], iconAnchor: [8, 8] }),
+                        zIndexOffset: 1000
+                    }).addTo(map);
+                    _locMarker.bindPopup('<strong>Your Location</strong>');
+                }
+
+                navigator.geolocation.watchPosition(
+                    function (pos) {
+                        updateLocationDot(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+                    },
+                    function (err) { console.warn('Geolocation:', err.message); },
+                    { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
+                );
+            }
         };
         </script>
     </x-slot>
@@ -125,19 +173,19 @@
             <a href="{{ route('leads.index') }}" wire:navigate
                @class([
                    'px-3 py-1.5 font-medium transition-colors flex items-center gap-1.5',
-                   'bg-slate-900 text-white' => ! request()->query('mapview'),
-                   'text-slate-500 hover:bg-slate-50' => request()->query('mapview'),
+                   'bg-slate-900 text-white' => ! $isMapView,
+                   'text-slate-500 hover:bg-slate-50' => $isMapView,
                ])>
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
                 </svg>
                 List
             </a>
-            <a href="{{ route('leads.index', ['mapview' => 1]) }}" wire:navigate
+            <a href="{{ route('leads.map') }}" wire:navigate
                @class([
                    'px-3 py-1.5 font-medium transition-colors flex items-center gap-1.5 border-l border-slate-200',
-                   'bg-slate-900 text-white' => request()->query('mapview'),
-                   'text-slate-500 hover:bg-slate-50' => ! request()->query('mapview'),
+                   'bg-slate-900 text-white' => $isMapView,
+                   'text-slate-500 hover:bg-slate-50' => ! $isMapView,
                ])>
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.159.69.159 1.006 0z" />
@@ -157,7 +205,7 @@
         @endif
     </x-slot>
 
-    @if(request()->query('mapview'))
+    @if($isMapView)
         <livewire:leads.lead-map />
     @else
         <livewire:leads.lead-list />
