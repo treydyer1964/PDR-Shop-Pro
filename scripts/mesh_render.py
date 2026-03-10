@@ -140,33 +140,60 @@ def render_png(grid_in, output_path):
     """
     Render MESH grid as a smooth transparent RGBA PNG using Pillow.
 
-    Each grid cell at or above the minimum threshold is painted with its
-    size-band RGBA color. A Gaussian blur (radius 1.5) is applied after
-    coloring to smooth the blocky 0.1° pixel edges into soft contour-like
-    gradients, matching the visual style of apps like Hailpoint.
+    Uses premultiplied-alpha Gaussian blur: multiply RGB by alpha before
+    blurring, blur all channels, then de-premultiply. This prevents the
+    black/grey bleeding that occurs when transparent (0,0,0,0) pixels are
+    naively mixed with colored pixels during a standard RGBA blur.
 
     Grid orientation: row 0 = north (55°N), col 0 = west (−130°W).
-    Leaflet imageOverlay stretches from SW→NE, so row 0 must be at the TOP
-    of the image — the numpy array is already in this orientation (no flip).
+    Leaflet imageOverlay stretches from SW→NE, so row 0 must be at the TOP.
     """
     from PIL import ImageFilter
 
     h, w = grid_in.shape
 
-    # Start fully transparent
+    # Build straight-alpha RGBA
     rgba = np.zeros((h, w, 4), dtype=np.uint8)
-
-    # Apply bands from lowest to highest so higher bands overwrite lower
     for threshold, color in BANDS:
-        mask = grid_in >= threshold
-        rgba[mask] = color
+        rgba[grid_in >= threshold] = color
+
+    # ── Premultiplied-alpha Gaussian blur ─────────────────────────────────────
+    # Blurring in straight-alpha space causes transparent (black) pixels to
+    # bleed grey halos into colored areas. Premultiplied-alpha avoids this.
+
+    def _blur_channel(arr_f, radius):
+        """Blur a float32 2D array via PIL GaussianBlur, returning float32."""
+        img_l = Image.fromarray(np.clip(arr_f, 0, 255).astype(np.uint8), 'L')
+        return np.array(img_l.filter(ImageFilter.GaussianBlur(radius=radius)),
+                        dtype=np.float32)
+
+    arr  = rgba.astype(np.float32)
+    a_f  = arr[:, :, 3] / 255.0  # normalized alpha
+
+    # Premultiply RGB by alpha so transparent pixels contribute no color
+    r_pre = arr[:, :, 0] * a_f
+    g_pre = arr[:, :, 1] * a_f
+    b_pre = arr[:, :, 2] * a_f
+    a_pre = arr[:, :, 3]         # alpha blurred in straight space is fine
+
+    radius = 1.5
+    r_b = _blur_channel(r_pre, radius)
+    g_b = _blur_channel(g_pre, radius)
+    b_b = _blur_channel(b_pre, radius)
+    a_b = _blur_channel(a_pre, radius)
+
+    # De-premultiply: recover straight-alpha RGB
+    a_n   = a_b / 255.0
+    eps   = 1e-6
+    r_out = np.where(a_n > eps, r_b / np.maximum(a_n, eps), 0.0)
+    g_out = np.where(a_n > eps, g_b / np.maximum(a_n, eps), 0.0)
+    b_out = np.where(a_n > eps, b_b / np.maximum(a_n, eps), 0.0)
+
+    out = np.stack([r_out, g_out, b_out, a_b], axis=2)
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-    # Apply Gaussian blur to smooth the hard pixel boundaries into soft gradients
-    img = Image.fromarray(rgba, 'RGBA')
-    img = img.filter(ImageFilter.GaussianBlur(radius=1.5))
-    img.save(output_path, format='PNG')
+    Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), 'RGBA').save(
+        output_path, format='PNG')
 
     return output_path
 
