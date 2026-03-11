@@ -63,9 +63,9 @@ class LeadForm extends Component
             $this->territory_id    = $lead->territory_id ? (string) $lead->territory_id : '';
             $this->storm_event_id  = $lead->storm_event_id ? (string) $lead->storm_event_id : '';
         } else {
-            // Default assignee to current user if they're a rep
+            // Default assignee to current user if they're a sales advisor
             $user = auth()->user();
-            if (! $user->canAccessAnalytics()) {
+            if ($user->isAdvisor()) {
                 $this->assigned_to = (string) $user->id;
             }
 
