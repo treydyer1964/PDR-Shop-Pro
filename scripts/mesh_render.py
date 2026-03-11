@@ -43,9 +43,9 @@ GRID_NI = 7000
 MISSING_THRESHOLD_MM = 9000.0
 
 # ── Output dimensions — must match Leaflet overlay aspect ratio (2:1 CONUS) ───
-# Grid is 350×700 after 10× downsample; output is the same size (1 px per cell)
-OUT_W = 700   # pixels
-OUT_H = 350   # pixels
+# Grid is 875×1750 after 4× downsample; output is the same size (1 px per cell)
+OUT_W = 1750  # pixels
+OUT_H = 875   # pixels
 
 # ── Size bands: lower bound (inches), RGBA color ──────────────────────────────
 # Bands are applied in order; each pixel gets the color of its highest bracket.
@@ -176,7 +176,7 @@ def render_png(grid_in, output_path):
     b_pre = arr[:, :, 2] * a_f
     a_pre = arr[:, :, 3]         # alpha blurred in straight space is fine
 
-    radius = 1.5
+    radius = 0.8
     r_b = _blur_channel(r_pre, radius)
     g_b = _blur_channel(g_pre, radius)
     b_b = _blur_channel(b_pre, radius)
@@ -205,7 +205,7 @@ def main():
     parser.add_argument('--url',         required=True,  help='URL of .grib2.gz file')
     parser.add_argument('--output',      required=True,  help='Output PNG path')
     parser.add_argument('--accumulator', default=None,   help='Daily max .npy accumulator path')
-    parser.add_argument('--downsample',  type=int, default=10, help='Spatial downsample factor (default 10)')
+    parser.add_argument('--downsample',  type=int, default=4, help='Spatial downsample factor (default 4)')
     args = parser.parse_args()
 
     with tempfile.TemporaryDirectory() as tmpdir:

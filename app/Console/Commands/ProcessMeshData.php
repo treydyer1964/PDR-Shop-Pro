@@ -61,7 +61,7 @@ class ProcessMeshData extends Command
             '--url',         $url,
             '--output',      $pngAbsPath,
             '--accumulator', $npyAbsPath,
-            '--downsample',  '10',
+            '--downsample',  '4',
         ]));
 
         $this->line("Fetching: {$url}");
