@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">{{ $customer->full_name }}</x-slot>
     <x-slot name="headerActions">
-        @if(auth()->user()->role === 'owner')
+        @if(auth()->user()->hasRole('owner'))
         <form method="POST" action="{{ route('customers.destroy', $customer) }}"
               onsubmit="return confirm('Delete {{ $customer->full_name }}? This cannot be undone.')">
             @csrf @method('DELETE')

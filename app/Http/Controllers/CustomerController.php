@@ -32,7 +32,7 @@ class CustomerController extends Controller
     public function destroy(Customer $customer)
     {
         $this->authorizeTenant($customer);
-        abort_unless(auth()->user()->role === 'owner', 403);
+        abort_unless(auth()->user()->hasRole('owner'), 403);
 
         $customer->delete();
 

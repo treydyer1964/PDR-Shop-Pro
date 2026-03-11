@@ -52,7 +52,7 @@ class WorkOrderController extends Controller
     public function destroy(WorkOrder $workOrder)
     {
         abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
-        abort_unless(auth()->user()->role === 'owner', 403);
+        abort_unless(auth()->user()->hasRole('owner'), 403);
 
         $workOrder->delete(); // cascades to all child tables
 

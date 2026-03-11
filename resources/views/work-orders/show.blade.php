@@ -8,7 +8,7 @@
         </div>
     </x-slot>
     <x-slot name="headerActions">
-        @if(auth()->user()->role === 'owner')
+        @if(auth()->user()->hasRole('owner'))
         <form method="POST" action="{{ route('work-orders.destroy', $workOrder) }}"
               onsubmit="return confirm('Delete work order {{ $workOrder->ro_number }}? This cannot be undone.')">
             @csrf @method('DELETE')
