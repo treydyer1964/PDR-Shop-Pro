@@ -186,9 +186,15 @@
                     _locMarker.bindPopup('<strong>Your Location</strong>');
                 }
 
+                var _locatedOnce = false;
                 navigator.geolocation.watchPosition(
                     function (pos) {
                         updateLocationDot(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+                        // If returning from a pin page, fly to current location once
+                        if (!_locatedOnce && urlParams.get('locate') === '1') {
+                            _locatedOnce = true;
+                            map.setView([pos.coords.latitude, pos.coords.longitude], 17);
+                        }
                     },
                     function (err) { console.warn('Geolocation:', err.message); },
                     { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
