@@ -37,13 +37,14 @@ Route::middleware(['auth'])->group(function () {
     // ── Work Orders ───────────────────────────────────────────────────────────
     // Index and show are accessible to all auth users (field staff scoped in Livewire/controller)
     Route::get('/work-orders',                     [WorkOrderController::class, 'index'])->name('work-orders.index');
-    Route::get('/work-orders/{workOrder}',          [WorkOrderController::class, 'show'])->name('work-orders.show');
-    Route::get('/work-orders/{workOrder}/edit',     [WorkOrderController::class, 'edit'])->name('work-orders.edit');
 
-    // Create restricted: Owner, Bookkeeper, Sales Manager, Sales Advisor
+    // Create must be before {workOrder} or "create" gets matched as a WO id
     Route::get('/work-orders/create', [WorkOrderController::class, 'create'])
         ->middleware('role:owner,bookkeeper,sales_manager,sales_advisor')
         ->name('work-orders.create');
+
+    Route::get('/work-orders/{workOrder}',          [WorkOrderController::class, 'show'])->name('work-orders.show');
+    Route::get('/work-orders/{workOrder}/edit',     [WorkOrderController::class, 'edit'])->name('work-orders.edit');
 
     // Estimate import (OCR intake → pre-fills WO wizard)
     Route::get('/estimates/import', [EstimateController::class, 'import'])
