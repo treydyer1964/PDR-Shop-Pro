@@ -115,8 +115,14 @@
                 });
             }
 
-            // Set initial view first so map has a valid state
-            if (leads.length === 1) {
+            // Set initial view — restore from Back-to-Map params if present
+            var urlParams  = new URLSearchParams(window.location.search);
+            var restoreZoom = urlParams.get('zoom');
+            var restoreLat  = urlParams.get('clat');
+            var restoreLng  = urlParams.get('clng');
+            if (restoreZoom && restoreLat && restoreLng) {
+                map.setView([parseFloat(restoreLat), parseFloat(restoreLng)], parseInt(restoreZoom));
+            } else if (leads.length === 1) {
                 map.setView([leads[0].lat, leads[0].lng], 15);
             } else if (leads.length > 1) {
                 var bounds = leads.map(function (l) { return [l.lat, l.lng]; });
@@ -127,11 +133,15 @@
 
             renderMarkers('');
 
-            // Tap empty map space to create a new lead at that location
+            // Tap empty map space to create a new pin at that location
             map.on('click', function (e) {
-                var lat = e.latlng.lat.toFixed(6);
-                var lng = e.latlng.lng.toFixed(6);
-                window.location.href = '/leads/create?lat=' + lat + '&lng=' + lng;
+                var lat    = e.latlng.lat.toFixed(6);
+                var lng    = e.latlng.lng.toFixed(6);
+                var zoom   = map.getZoom();
+                var cLat   = map.getCenter().lat.toFixed(6);
+                var cLng   = map.getCenter().lng.toFixed(6);
+                window.location.href = '/leads/create?lat=' + lat + '&lng=' + lng
+                    + '&zoom=' + zoom + '&mapLat=' + cLat + '&mapLng=' + cLng;
             });
 
             map.getContainer().style.cursor = 'crosshair';
@@ -188,7 +198,7 @@
         </script>
     </x-slot>
 
-    <x-slot name="header">Leads</x-slot>
+    <x-slot name="header">Pins</x-slot>
     <x-slot name="headerActions">
         {{-- List / Map toggle --}}
         <div class="flex overflow-hidden rounded-lg border border-slate-200 bg-white text-sm">
@@ -222,7 +232,7 @@
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                New Lead
+                New Pin
             </a>
         @endif
     </x-slot>

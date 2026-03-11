@@ -299,7 +299,7 @@
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
                 </span>
-                {{ $lead && $lead->exists ? 'Save Changes' : 'Create Lead' }}
+                {{ $lead && $lead->exists ? 'Save Changes' : 'Save Pin' }}
             </button>
         </div>
 

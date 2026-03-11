@@ -82,7 +82,7 @@
             @endif
             @endif
             @if(auth()->user()?->canCreateWorkOrders())
-            <x-nav-item route="leads.index" icon="map-pin">Leads</x-nav-item>
+            <x-nav-item route="leads.index" icon="map-pin">Pins</x-nav-item>
             <a href="{{ route('leads.map') }}"
                @class([
                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ml-5',
