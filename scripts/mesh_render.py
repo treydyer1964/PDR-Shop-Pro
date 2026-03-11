@@ -176,7 +176,7 @@ def render_png(grid_in, output_path):
     b_pre = arr[:, :, 2] * a_f
     a_pre = arr[:, :, 3]         # alpha blurred in straight space is fine
 
-    radius = 0.8
+    radius = 0.5
     r_b = _blur_channel(r_pre, radius)
     g_b = _blur_channel(g_pre, radius)
     b_b = _blur_channel(b_pre, radius)

@@ -14,11 +14,13 @@ class ProcessMeshData extends Command
                             {--url=  : Override GRIB2.gz URL (skip auto-detect)}
                             {--frame= : Specific frame timestamp YYYYMMDD-HHMMSS for historical}';
 
-    protected $description = 'Download and render an MRMS MESH GRIB2 frame, building a daily max swath';
+    protected $description = 'Download MRMS MESH_Max_60min frame and accumulate into daily max swath';
 
-    // MRMS_Max_1440min = rolling 24-hour maximum MESH (correct daily swath product)
-    // Individual MESH.latest is only an instantaneous snapshot — wrong for daily swaths
-    const MRMS_BASE = 'https://mrms.ncep.noaa.gov/2D/MESH_Max_1440min/';
+    // MRMS_MESH_Max_60min = rolling 1-hour maximum MESH.
+    // Each frame only captures storms active in the past 60 minutes — no contamination
+    // from other-state storms that happened earlier in the day. Our 30-min scheduler
+    // accumulates these into a daily max that builds the full local storm track.
+    const MRMS_BASE = 'https://mrms.ncep.noaa.gov/2D/MESH_Max_60min/';
 
     // CONUS image overlay bounds [SW lat, SW lng, NE lat, NE lng]
     // MRMS MESH CONUS grid: lat 20.005–55.005, lon -129.995–(-60.005)
@@ -109,8 +111,8 @@ class ProcessMeshData extends Command
             return null;
         }
 
-        // Filenames: MRMS_MESH_Max_1440min_00.50_YYYYMMDD-HHMMSS.grib2.gz
-        preg_match_all('/MRMS_MESH_Max_1440min_00\.50_(\d{8}-\d{6})\.grib2\.gz/', $html, $matches);
+        // Filenames: MRMS_MESH_Max_60min_00.50_YYYYMMDD-HHMMSS.grib2.gz
+        preg_match_all('/MRMS_MESH_Max_60min_00\.50_(\d{8}-\d{6})\.grib2\.gz/', $html, $matches);
 
         if (empty($matches[1])) return null;
 
@@ -129,7 +131,7 @@ class ProcessMeshData extends Command
 
         sort($frames);
         $lastFrame = end($frames);
-        return self::MRMS_BASE . "MRMS_MESH_Max_1440min_00.50_{$lastFrame}.grib2.gz";
+        return self::MRMS_BASE . "MRMS_MESH_Max_60min_00.50_{$lastFrame}.grib2.gz";
     }
 
     private function findPython(): string
