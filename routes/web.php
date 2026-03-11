@@ -43,8 +43,9 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:owner,bookkeeper,sales_manager,sales_advisor')
         ->name('work-orders.create');
 
-    Route::get('/work-orders/{workOrder}',          [WorkOrderController::class, 'show'])->name('work-orders.show');
-    Route::get('/work-orders/{workOrder}/edit',     [WorkOrderController::class, 'edit'])->name('work-orders.edit');
+    Route::get('/work-orders/{workOrder}',              [WorkOrderController::class, 'show'])->name('work-orders.show');
+    Route::get('/work-orders/{workOrder}/edit',         [WorkOrderController::class, 'edit'])->name('work-orders.edit');
+    Route::delete('/work-orders/{workOrder}',           [WorkOrderController::class, 'destroy'])->name('work-orders.destroy')->middleware('role:owner');
 
     // Estimate import (OCR intake → pre-fills WO wizard)
     Route::get('/estimates/import', [EstimateController::class, 'import'])
@@ -63,7 +64,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Customers & Vehicles ──────────────────────────────────────────────────
     Route::resource('customers', CustomerController::class)
-        ->only(['index', 'create', 'show', 'edit']);
+        ->only(['index', 'create', 'show', 'edit', 'destroy']);
 
     Route::get('customers/{customer}/vehicles/create', [VehicleController::class, 'create'])
         ->name('customers.vehicles.create');

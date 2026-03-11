@@ -49,6 +49,17 @@ class WorkOrderController extends Controller
         return view('work-orders.show', compact('workOrder'));
     }
 
+    public function destroy(WorkOrder $workOrder)
+    {
+        abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
+        abort_unless(auth()->user()->role === 'owner', 403);
+
+        $workOrder->delete(); // cascades to all child tables
+
+        return redirect()->route('work-orders.index')
+            ->with('success', 'Work order ' . $workOrder->ro_number . ' deleted.');
+    }
+
     public function invoicePdf(WorkOrder $workOrder): \Illuminate\Http\Response
     {
         abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);

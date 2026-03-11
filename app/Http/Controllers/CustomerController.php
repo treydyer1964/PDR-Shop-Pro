@@ -29,6 +29,17 @@ class CustomerController extends Controller
         return view('customers.edit', compact('customer'));
     }
 
+    public function destroy(Customer $customer)
+    {
+        $this->authorizeTenant($customer);
+        abort_unless(auth()->user()->role === 'owner', 403);
+
+        $customer->delete();
+
+        return redirect()->route('customers.index')
+            ->with('success', $customer->full_name . ' deleted.');
+    }
+
     private function authorizeTenant(Customer $customer): void
     {
         abort_unless($customer->tenant_id === auth()->user()->tenant_id, 403);
