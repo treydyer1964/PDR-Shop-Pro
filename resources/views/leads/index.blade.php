@@ -115,13 +115,24 @@
                 });
             }
 
-            // Set initial view — restore from Back-to-Map params if present
-            var urlParams  = new URLSearchParams(window.location.search);
-            var restoreZoom = urlParams.get('zoom');
-            var restoreLat  = urlParams.get('clat');
-            var restoreLng  = urlParams.get('clng');
+            // Set initial view — Back-to-Map URL params first, then saved position, then fitBounds
+            var urlParams    = new URLSearchParams(window.location.search);
+            var restoreZoom  = urlParams.get('zoom');
+            var restoreLat   = urlParams.get('clat');
+            var restoreLng   = urlParams.get('clng');
+
+            // Restore saved position from in-session globals (filter changes) or localStorage (page refresh)
+            var _savedCenter = window._mapSavedCenter;
+            var _savedZoom   = window._mapSavedZoom;
+            if (!_savedCenter) {
+                var _pos = JSON.parse(localStorage.getItem('leadMapPosition') || 'null');
+                if (_pos) { _savedCenter = [_pos.lat, _pos.lng]; _savedZoom = _pos.zoom; }
+            }
+
             if (restoreZoom && restoreLat && restoreLng) {
                 map.setView([parseFloat(restoreLat), parseFloat(restoreLng)], parseInt(restoreZoom));
+            } else if (_savedCenter) {
+                map.setView(_savedCenter, _savedZoom || 15);
             } else if (leads.length === 1) {
                 map.setView([leads[0].lat, leads[0].lng], 15);
             } else if (leads.length > 1) {
@@ -131,7 +142,18 @@
                 map.setView([32.45, -99.73], 12);
             }
 
-            renderMarkers('');
+            // Save position to globals + localStorage whenever map is panned or zoomed
+            map.on('moveend zoomend', function () {
+                window._mapSavedCenter = map.getCenter();
+                window._mapSavedZoom   = map.getZoom();
+                localStorage.setItem('leadMapPosition', JSON.stringify({
+                    lat: map.getCenter().lat, lng: map.getCenter().lng, zoom: map.getZoom()
+                }));
+            });
+
+            // Restore saved pin type filter on init
+            var _savedPin = localStorage.getItem('leadMapPinFilter') || '';
+            renderMarkers(_savedPin);
 
             // Tap empty map space to create a new pin at that location
             map.on('click', function (e) {
@@ -146,7 +168,7 @@
 
             map.getContainer().style.cursor = 'crosshair';
 
-            window.leadMapSetFilter = function (val) { renderMarkers(val); };
+            window.leadMapSetFilter = function (val) { renderMarkers(val); localStorage.setItem('leadMapPinFilter', val || ''); };
             window.leadMapFlyTo = function (lat, lng, zoom) { map.flyTo([lat, lng], zoom || 15); };
             window.leadMapCount = function (filter) {
                 var n = filter ? leads.filter(function (l) { return l.status === filter; }).length : leads.length;
@@ -202,6 +224,26 @@
                 );
             }
         };
+
+        // Restore server-side filters from localStorage when map loads with no active filters
+        window.restoreLeadMapServerFilters = function (wire) {
+            var sf = JSON.parse(localStorage.getItem('leadMapFilters') || 'null');
+            if (sf && (sf.storm || sf.rep || sf.from || sf.to)) {
+                wire.restoreFilters(sf.storm || '', sf.rep || '', sf.from || '', sf.to || '');
+            }
+        };
+
+        // Save server-side filter state to localStorage whenever Livewire re-renders the map
+        document.addEventListener('livewire:updated', function () {
+            if (!window.location.pathname.startsWith('/leads')) return;
+            var p = new URLSearchParams(window.location.search);
+            localStorage.setItem('leadMapFilters', JSON.stringify({
+                storm: p.get('storm') || '',
+                rep:   p.get('rep')   || '',
+                from:  p.get('from')  || '',
+                to:    p.get('to')    || '',
+            }));
+        });
         </script>
     </x-slot>
 

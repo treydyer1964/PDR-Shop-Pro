@@ -24,13 +24,14 @@
 
     {{-- Compact filter bar: all dropdowns in one row --}}
     <div
-        x-data="{ datePreset: @js($activeDatePreset), pinFilter: '' }"
+        x-data="{ datePreset: localStorage.getItem('leadMapDatePreset') || @js($activeDatePreset), pinFilter: localStorage.getItem('leadMapPinFilter') || '' }"
+        x-init="if (!@js(boolval($filterStorm || $filterRep || $filterDateFrom || $filterDateTo))) $nextTick(() => window.restoreLeadMapServerFilters && window.restoreLeadMapServerFilters($wire))"
         class="mb-3 flex flex-wrap items-center gap-2"
     >
         {{-- Date dropdown --}}
         <select
             x-model="datePreset"
-            @change="if (datePreset !== 'custom') $wire.setDatePreset(datePreset)"
+            @change="if (datePreset !== 'custom') $wire.setDatePreset(datePreset); localStorage.setItem('leadMapDatePreset', datePreset)"
             class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1.5">
             <option value="all">All Dates</option>
             <option value="today">Today</option>

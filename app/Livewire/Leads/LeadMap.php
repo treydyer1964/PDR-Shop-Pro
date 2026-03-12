@@ -47,6 +47,14 @@ class LeadMap extends Component
         $this->filterDateTo   = '';
     }
 
+    public function restoreFilters(string $storm, string $rep, string $from, string $to): void
+    {
+        $this->filterStorm    = $storm;
+        $this->filterRep      = $rep;
+        $this->filterDateFrom = $from;
+        $this->filterDateTo   = $to;
+    }
+
     #[Computed]
     public function reps()
     {
