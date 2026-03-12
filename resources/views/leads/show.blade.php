@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        {{ $lead->hasName() ? $lead->fullName() : 'Unnamed Lead' }}
+        {{ $lead->hasName() ? $lead->fullName() : 'Unnamed Pin' }}
     </x-slot>
     <x-slot name="headerActions">
         <a href="{{ route('leads.map') }}?locate=1"
