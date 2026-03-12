@@ -9,15 +9,14 @@
                     $nextTick(async () => {
                         gpsLoading = true;
                         try {
-                            const r = await fetch('https://nominatim.openstreetmap.org/reverse?lat={{ $lat }}&lon={{ $lng }}&format=json');
+                            const r = await fetch('/api/reverse-geocode?lat={{ $lat }}&lng={{ $lng }}');
                             const d = await r.json();
-                            const addr = d.address || {};
-                            const streetNum = addr.house_number ?? '';
-                            const street    = addr.road ?? '';
-                            $wire.set('address', (streetNum + ' ' + street).trim());
-                            $wire.set('city',    addr.city ?? addr.town ?? addr.village ?? '');
-                            $wire.set('state',   (addr.state_code ?? addr.ISO3166_2_lvl4 ?? '').replace(/^US-/, '').substring(0, 2).toUpperCase());
-                            $wire.set('zip',     addr.postcode ?? '');
+                            if (!d.error) {
+                                $wire.set('address', d.address);
+                                $wire.set('city',    d.city);
+                                $wire.set('state',   d.state);
+                                $wire.set('zip',     d.zip);
+                            }
                         } catch(e) {}
                         gpsLoading = false;
                     });
@@ -34,15 +33,14 @@
                                 navigator.geolocation.getCurrentPosition(
                                     async (pos) => {
                                         try {
-                                            const r = await fetch('https://nominatim.openstreetmap.org/reverse?lat=' + pos.coords.latitude + '&lon=' + pos.coords.longitude + '&format=json');
+                                            const r = await fetch('/api/reverse-geocode?lat=' + pos.coords.latitude + '&lng=' + pos.coords.longitude);
                                             const d = await r.json();
-                                            const addr = d.address || {};
-                                            const streetNum = addr.house_number ?? '';
-                                            const street    = addr.road ?? '';
-                                            $wire.set('address', (streetNum + ' ' + street).trim());
-                                            $wire.set('city',    addr.city ?? addr.town ?? addr.village ?? '');
-                                            $wire.set('state',   (addr.state_code ?? addr.ISO3166_2_lvl4 ?? '').replace(/^US-/, '').substring(0, 2).toUpperCase());
-                                            $wire.set('zip',     addr.postcode ?? '');
+                                            if (!d.error) {
+                                                $wire.set('address', d.address);
+                                                $wire.set('city',    d.city);
+                                                $wire.set('state',   d.state);
+                                                $wire.set('zip',     d.zip);
+                                            }
                                             $wire.set('lat',     String(pos.coords.latitude));
                                             $wire.set('lng',     String(pos.coords.longitude));
                                         } catch(e) {

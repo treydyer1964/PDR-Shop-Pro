@@ -34,6 +34,56 @@ Route::middleware(['auth'])->group(function () {
     // VIN extraction via OpenAI Vision
     Route::post('/vin/extract', [VehicleController::class, 'extractVin'])->name('vin.extract');
 
+    // Reverse geocode proxy — tries US Census TIGER data first, falls back to Nominatim
+    Route::get('/api/reverse-geocode', function () {
+        $lat = (float) request()->query('lat');
+        $lng = (float) request()->query('lng');
+
+        // US Census Bureau Geocoder — free, no key, uses official TIGER/Line address data
+        // Note: Census API uses x=longitude, y=latitude
+        try {
+            $census = \Illuminate\Support\Facades\Http::timeout(6)->get(
+                'https://geocoding.geo.census.gov/geocoder/locations/coordinates',
+                ['x' => $lng, 'y' => $lat, 'benchmark' => 'Public_AR_Current', 'format' => 'json']
+            );
+            $matches = $census->json('result.addressMatches') ?? [];
+            if (!empty($matches)) {
+                $m    = $matches[0];
+                $comp = $m['addressComponents'] ?? [];
+                // matchedAddress = "123 MAIN ST, ABILENE, TX, 79601"
+                $street = ucwords(strtolower(trim(explode(',', $m['matchedAddress'] ?? '')[0] ?? '')));
+                return response()->json([
+                    'address' => $street,
+                    'city'    => ucwords(strtolower($comp['city']    ?? '')),
+                    'state'   => strtoupper($comp['state'] ?? ''),
+                    'zip'     => $comp['zip'] ?? '',
+                    'source'  => 'census',
+                ]);
+            }
+        } catch (\Exception $e) {}
+
+        // Nominatim fallback
+        try {
+            $nom  = \Illuminate\Support\Facades\Http::timeout(6)
+                ->withHeaders(['User-Agent' => 'PDRShopPro/1.0 (pdrshoppro.com)'])
+                ->get('https://nominatim.openstreetmap.org/reverse', [
+                    'lat' => $lat, 'lon' => $lng, 'format' => 'json', 'zoom' => 18,
+                ]);
+            $addr       = $nom->json('address') ?? [];
+            $stateRaw   = $addr['state_code'] ?? ($addr['ISO3166-2-lvl4'] ?? '');
+            $state      = strtoupper(substr(preg_replace('/^US-/', '', $stateRaw), 0, 2));
+            return response()->json([
+                'address' => trim(($addr['house_number'] ?? '') . ' ' . ($addr['road'] ?? '')),
+                'city'    => $addr['city'] ?? $addr['town'] ?? $addr['village'] ?? '',
+                'state'   => $state,
+                'zip'     => $addr['postcode'] ?? '',
+                'source'  => 'nominatim',
+            ]);
+        } catch (\Exception $e) {}
+
+        return response()->json(['error' => 'Could not geocode location'], 422);
+    })->name('api.reverse-geocode');
+
     // ── Work Orders ───────────────────────────────────────────────────────────
     // Index and show are accessible to all auth users (field staff scoped in Livewire/controller)
     Route::get('/work-orders',                     [WorkOrderController::class, 'index'])->name('work-orders.index');
