@@ -24,8 +24,21 @@
 
     {{-- Compact filter bar: all dropdowns in one row --}}
     <div
-        x-data="{ datePreset: localStorage.getItem('leadMapDatePreset') || @js($activeDatePreset), pinFilter: localStorage.getItem('leadMapPinFilter') || '' }"
-        x-init="if (!@js(boolval($filterStorm || $filterRep || $filterDateFrom || $filterDateTo))) $nextTick(() => window.restoreLeadMapServerFilters && window.restoreLeadMapServerFilters($wire))"
+        x-data="{
+            datePreset: localStorage.getItem('leadMapDatePreset') || @js($activeDatePreset),
+            pinFilter: localStorage.getItem('leadMapPinFilter') || '',
+            init() {
+                var self = this;
+                // Apply saved pin filter once initLeadMap fires the ready event
+                document.addEventListener('lead-map-ready', function () {
+                    if (self.pinFilter && window.leadMapSetFilter) window.leadMapSetFilter(self.pinFilter);
+                }, { once: true });
+                // Restore server-side filters from localStorage if none are currently active
+                if (!@js(boolval($filterStorm || $filterRep || $filterDateFrom || $filterDateTo))) {
+                    this.$nextTick(() => window.restoreLeadMapServerFilters && window.restoreLeadMapServerFilters(this.$wire));
+                }
+            }
+        }"
         class="mb-3 flex flex-wrap items-center gap-2"
     >
         {{-- Date dropdown --}}
@@ -79,7 +92,8 @@
 
         {{-- Pin Type dropdown --}}
         <select
-            @change="pinFilter = $event.target.value; window.leadMapSetFilter && window.leadMapSetFilter(pinFilter)"
+            x-model="pinFilter"
+            @change="window.leadMapSetFilter && window.leadMapSetFilter($event.target.value)"
             class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1.5">
             <option value="">All Pin Types</option>
             @foreach($this->statuses as $s)

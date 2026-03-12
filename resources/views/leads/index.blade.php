@@ -223,6 +223,9 @@
                     { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
                 );
             }
+
+            // Signal Alpine that the map is fully initialised so it can apply the saved pin filter
+            document.dispatchEvent(new CustomEvent('lead-map-ready'));
         };
 
         // Restore server-side filters from localStorage when map loads with no active filters
