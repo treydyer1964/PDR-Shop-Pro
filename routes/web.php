@@ -56,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/work-orders/{workOrder}/invoice/pdf',           [WorkOrderController::class, 'invoicePdf'])->name('work-orders.invoice-pdf');
     Route::get('/work-orders/{workOrder}/rental-invoice/pdf',    [WorkOrderController::class, 'rentalInvoicePdf'])->name('work-orders.rental-invoice-pdf');
     Route::get('/work-orders/{workOrder}/rental-agreement',      [WorkOrderController::class, 'rentalAgreementPdf'])->name('work-orders.rental-agreement-pdf');
+    Route::get('/rental-agreement/blank',                        [WorkOrderController::class, 'blankRentalAgreementPdf'])->name('rental-agreement.blank');
 
     // ── Staff ─────────────────────────────────────────────────────────────────
     Route::resource('staff', StaffController::class)

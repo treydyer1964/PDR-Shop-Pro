@@ -105,12 +105,30 @@ class WorkOrderController extends Controller
         $workOrder->load(['customer', 'vehicle', 'tenant']);
         $tenant = $workOrder->tenant;
 
+        $isBlank = false;
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
             'work-orders.rental-agreement-pdf',
-            compact('workOrder', 'rental', 'rentalVehicle', 'segment', 'tenant')
+            compact('workOrder', 'rental', 'rentalVehicle', 'segment', 'tenant', 'isBlank')
         )->setPaper('letter', 'portrait');
 
-        $filename = 'rental-agreement-' . $workOrder->ro_number . '.pdf';
+        $filename = 'courtesy-vehicle-agreement-' . $workOrder->ro_number . '.pdf';
         return $pdf->stream($filename);
+    }
+
+    public function blankRentalAgreementPdf(): \Illuminate\Http\Response
+    {
+        $tenant      = auth()->user()->tenant;
+        $workOrder   = null;
+        $rental      = null;
+        $rentalVehicle = null;
+        $segment     = null;
+        $isBlank     = true;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'work-orders.rental-agreement-pdf',
+            compact('workOrder', 'rental', 'rentalVehicle', 'segment', 'tenant', 'isBlank')
+        )->setPaper('letter', 'portrait');
+
+        return $pdf->stream('courtesy-vehicle-agreement-blank.pdf');
     }
 }
