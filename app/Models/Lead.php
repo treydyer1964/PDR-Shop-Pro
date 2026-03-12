@@ -62,6 +62,11 @@ class Lead extends Model
         return $this->hasMany(LeadFollowUp::class)->orderBy('scheduled_at');
     }
 
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class)->orderBy('scheduled_at');
+    }
+
     public function statusLogs(): HasMany
     {
         return $this->hasMany(LeadStatusLog::class)->latest();

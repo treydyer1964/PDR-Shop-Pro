@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Appointment extends Model
 {
     protected $fillable = [
-        'tenant_id', 'work_order_id', 'appointment_type_id',
+        'tenant_id', 'work_order_id', 'lead_id', 'appointment_type_id',
         'scheduled_at', 'duration_minutes', 'notes',
         'status', 'completed_at', 'created_by',
     ];
@@ -28,6 +28,11 @@ class Appointment extends Model
     public function workOrder(): BelongsTo
     {
         return $this->belongsTo(WorkOrder::class);
+    }
+
+    public function lead(): BelongsTo
+    {
+        return $this->belongsTo(Lead::class);
     }
 
     public function type(): BelongsTo

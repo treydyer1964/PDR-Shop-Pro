@@ -87,6 +87,38 @@
         </select>
 
         <span class="text-xs text-slate-400" x-text="window.leadMapCount ? window.leadMapCount(pinFilter) : ''"></span>
+
+        {{-- Address search --}}
+        <div x-data="{ query: '', searching: false, error: '' }" class="ml-auto flex items-center gap-1.5">
+            <input
+                x-model="query"
+                type="search"
+                placeholder="Search address…"
+                @keydown.enter.prevent="
+                    if (!query.trim()) return;
+                    searching = true; error = '';
+                    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query))
+                        .then(r => r.json())
+                        .then(d => {
+                            searching = false;
+                            if (d.length) {
+                                window.leadMapFlyTo && window.leadMapFlyTo(parseFloat(d[0].lat), parseFloat(d[0].lon), 15);
+                            } else {
+                                error = 'Address not found';
+                            }
+                        })
+                        .catch(() => { searching = false; error = 'Search failed'; })
+                "
+                class="w-44 rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1.5 pr-8"
+            />
+            <template x-if="searching">
+                <svg class="h-4 w-4 animate-spin text-slate-400 -ml-7 mr-3 pointer-events-none" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+            </template>
+            <span x-show="error" x-text="error" class="text-xs text-red-500"></span>
+        </div>
     </div>
 
     {{-- Map wrapper — wire:key forces Leaflet reinit on server-side filter change --}}

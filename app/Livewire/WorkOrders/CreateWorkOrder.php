@@ -70,7 +70,9 @@ class CreateWorkOrder extends Component
     public string $adjuster_email       = '';
     public string $deductible           = '';
     public bool  $insurance_pre_inspected = false;
-    public bool  $has_rental_coverage   = false;
+    public bool  $has_rental_coverage         = false;
+    public bool  $needs_rental                = false;
+    public string $insurance_daily_coverage   = '';
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -359,6 +361,8 @@ class CreateWorkOrder extends Component
             'deductible'               => $this->isInsurance && $this->deductible ? (float) $this->deductible : null,
             'insurance_pre_inspected'  => $this->isInsurance && $this->insurance_pre_inspected,
             'has_rental_coverage'      => $this->isInsurance && $this->has_rental_coverage,
+            'needs_rental'             => $this->needs_rental,
+            'insurance_daily_coverage' => $this->insurance_daily_coverage ? (float) $this->insurance_daily_coverage : null,
         ]);
 
         // Open the first status log entry

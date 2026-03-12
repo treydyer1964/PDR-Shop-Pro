@@ -147,6 +147,7 @@
             map.getContainer().style.cursor = 'crosshair';
 
             window.leadMapSetFilter = function (val) { renderMarkers(val); };
+            window.leadMapFlyTo = function (lat, lng, zoom) { map.flyTo([lat, lng], zoom || 15); };
             window.leadMapCount = function (filter) {
                 var n = filter ? leads.filter(function (l) { return l.status === filter; }).length : leads.length;
                 return n + ' lead' + (n !== 1 ? 's' : '') + ' on map';

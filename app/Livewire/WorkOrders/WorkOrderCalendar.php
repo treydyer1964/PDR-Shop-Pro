@@ -145,12 +145,16 @@ class WorkOrderCalendar extends Component
 
         // Appointments in range (excluding cancelled)
         $apptQuery = Appointment::forTenant($tenantId)
-            ->with(['type', 'workOrder.customer'])
+            ->with(['type', 'workOrder.customer', 'lead'])
             ->whereBetween('scheduled_at', [$from->startOfDay(), $to->copy()->endOfDay()])
             ->where('status', '!=', AppointmentStatus::Cancelled->value);
 
         if (! $user->canSeeAllWorkOrders()) {
-            $apptQuery->whereHas('workOrder.assignments', fn($q) => $q->where('user_id', $user->id));
+            // Field staff see: WO appointments they're assigned to, or lead appointments they created
+            $apptQuery->where(function ($q) use ($user) {
+                $q->whereHas('workOrder.assignments', fn($iq) => $iq->where('user_id', $user->id))
+                  ->orWhere('created_by', $user->id);
+            });
         }
 
         $events = [];
@@ -173,9 +177,12 @@ class WorkOrderCalendar extends Component
             $events[$date][] = [
                 'type'          => 'appointment',
                 'label'         => $appt->type?->name ?? 'Appointment',
-                'sub'           => $appt->workOrder?->customer?->last_name ?? '',
+                'sub'           => $appt->workOrder?->customer?->last_name
+                                   ?? ($appt->lead?->fullName() ?: $appt->lead?->address ?? ''),
                 'time'          => $appt->scheduled_at->format('g:ia'),
-                'url'           => $appt->work_order_id ? route('work-orders.show', $appt->work_order_id) : '#',
+                'url'           => $appt->work_order_id
+                                   ? route('work-orders.show', $appt->work_order_id)
+                                   : ($appt->lead_id ? route('leads.show', $appt->lead_id) : '#'),
                 'badge_classes' => $appt->type?->badgeClasses() ?? 'bg-blue-100 text-blue-700',
             ];
         }

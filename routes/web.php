@@ -73,6 +73,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Operations (all auth users) ───────────────────────────────────────────
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+    Route::get('/calendar',     [AppointmentController::class, 'calendar'])->name('calendar');
     Route::get('/rentals',      [RentalController::class, 'index'])->name('rentals.index');
 
     // ── Leads: all roles except field techs/porters ───────────────────────────

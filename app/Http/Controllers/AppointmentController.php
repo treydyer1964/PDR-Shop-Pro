@@ -10,4 +10,9 @@ class AppointmentController extends Controller
     {
         return view('appointments.index');
     }
+
+    public function calendar(): View
+    {
+        return view('appointments.calendar');
+    }
 }

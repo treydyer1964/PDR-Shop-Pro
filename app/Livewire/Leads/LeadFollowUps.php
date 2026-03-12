@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Leads;
 
+use App\Enums\AppointmentStatus;
+use App\Models\Appointment;
+use App\Models\AppointmentType;
 use App\Models\Lead;
-use App\Models\LeadFollowUp;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -11,21 +13,35 @@ class LeadFollowUps extends Component
 {
     public Lead $lead;
 
-    public bool   $adding        = false;
-    public string $scheduled_at  = '';
-    public string $notes         = '';
+    public bool   $adding               = false;
+    public string $scheduled_at         = '';
+    public string $notes                = '';
+    public int    $appointment_type_id  = 0;
+
+    #[Computed]
+    public function appointmentTypes()
+    {
+        return AppointmentType::forTenant(auth()->user()->tenant_id)
+            ->active()
+            ->orderBy('sort_order')
+            ->get();
+    }
 
     #[Computed]
     public function followUps()
     {
-        return $this->lead->followUps()->with('creator')->get();
+        return Appointment::where('lead_id', $this->lead->id)
+            ->with(['type', 'createdBy'])
+            ->orderBy('scheduled_at')
+            ->get();
     }
 
     public function openAdd(): void
     {
-        $this->adding       = true;
-        $this->scheduled_at = '';
-        $this->notes        = '';
+        $this->adding              = true;
+        $this->scheduled_at        = '';
+        $this->notes               = '';
+        $this->appointment_type_id = 0;
     }
 
     public function cancelAdd(): void
@@ -36,18 +52,21 @@ class LeadFollowUps extends Component
     public function saveFollowUp(): void
     {
         $this->validate([
-            'scheduled_at' => 'required|date',
-            'notes'        => 'nullable|string|max:500',
+            'appointment_type_id' => 'required|integer|min:1',
+            'scheduled_at'        => 'required|date',
+            'notes'               => 'nullable|string|max:500',
         ]);
 
         $user = auth()->user();
 
-        LeadFollowUp::create([
-            'tenant_id'    => $user->tenant_id,
-            'lead_id'      => $this->lead->id,
-            'scheduled_at' => $this->scheduled_at,
-            'notes'        => $this->notes ?: null,
-            'created_by'   => $user->id,
+        Appointment::create([
+            'tenant_id'            => $user->tenant_id,
+            'lead_id'              => $this->lead->id,
+            'appointment_type_id'  => $this->appointment_type_id,
+            'scheduled_at'         => $this->scheduled_at,
+            'notes'                => $this->notes ?: null,
+            'status'               => AppointmentStatus::Scheduled->value,
+            'created_by'           => $user->id,
         ]);
 
         $this->adding = false;
@@ -56,12 +75,13 @@ class LeadFollowUps extends Component
 
     public function complete(int $id): void
     {
-        $followUp = LeadFollowUp::findOrFail($id);
-        abort_unless($followUp->lead_id === $this->lead->id, 403);
+        $appt = Appointment::where('id', $id)
+            ->where('lead_id', $this->lead->id)
+            ->firstOrFail();
 
-        $followUp->update([
-            'completed_at'  => now(),
-            'completed_by'  => auth()->id(),
+        $appt->update([
+            'status'       => AppointmentStatus::Completed->value,
+            'completed_at' => now(),
         ]);
 
         unset($this->followUps);
@@ -69,9 +89,11 @@ class LeadFollowUps extends Component
 
     public function delete(int $id): void
     {
-        $followUp = LeadFollowUp::findOrFail($id);
-        abort_unless($followUp->lead_id === $this->lead->id, 403);
-        $followUp->delete();
+        $appt = Appointment::where('id', $id)
+            ->where('lead_id', $this->lead->id)
+            ->firstOrFail();
+
+        $appt->delete();
         unset($this->followUps);
     }
 

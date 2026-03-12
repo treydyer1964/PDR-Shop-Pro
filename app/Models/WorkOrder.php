@@ -41,6 +41,8 @@ class WorkOrder extends Model
         'deductible',
         'insurance_pre_inspected',
         'has_rental_coverage',
+        'needs_rental',
+        'insurance_daily_coverage',
         // On Hold
         'on_hold',
         'held_at',
@@ -77,6 +79,8 @@ class WorkOrder extends Model
         'deductible'                  => 'decimal:2',
         'insurance_pre_inspected'     => 'boolean',
         'has_rental_coverage'         => 'boolean',
+        'needs_rental'                => 'boolean',
+        'insurance_daily_coverage'    => 'decimal:2',
         'on_hold'                     => 'boolean',
         'held_at'                     => 'datetime',
         'kicked'                      => 'boolean',

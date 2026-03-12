@@ -411,6 +411,18 @@
                                            class="rounded border-slate-300 text-blue-600" />
                                     Customer has rental coverage
                                 </label>
+                                @if($has_rental_coverage)
+                                <div class="ml-5 mt-1">
+                                    <label class="block text-xs font-medium text-slate-600">Insurance Daily Coverage ($)</label>
+                                    <input wire:model="insurance_daily_coverage" type="number" step="0.01" placeholder="e.g. 30.00"
+                                           class="mt-1 w-40 rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                                </div>
+                                @endif
+                                <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                    <input wire:model="needs_rental" type="checkbox"
+                                           class="rounded border-slate-300 text-blue-600" />
+                                    Customer needs a rental vehicle
+                                </label>
                             </div>
                         </div>
                     @endif
