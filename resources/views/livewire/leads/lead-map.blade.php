@@ -102,7 +102,7 @@
                         .then(d => {
                             searching = false;
                             if (d.length) {
-                                window.leadMapFlyTo && window.leadMapFlyTo(parseFloat(d[0].lat), parseFloat(d[0].lon), 15);
+                                window.leadMapFlyTo && window.leadMapFlyTo(parseFloat(d[0].lat), parseFloat(d[0].lon), 18);
                             } else {
                                 error = 'Address not found';
                             }
