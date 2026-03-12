@@ -198,6 +198,36 @@
     @isset($footerScripts){{ $footerScripts }}@endisset
     @livewireScripts
 
+    {{-- Mobile-safe PDF opener: uses Web Share API on iOS PWA, falls back to window.open() --}}
+    <script>
+    function openPdf(url, filename, btn) {
+        var origHtml = btn ? btn.innerHTML : null;
+        function restore() { if (btn) { btn.disabled = false; btn.innerHTML = origHtml; } }
+        function fallback() { restore(); window.open(url, '_blank'); }
+
+        if (btn) { btn.disabled = true; btn.innerHTML = 'Loading&hellip;'; }
+
+        if (navigator.canShare) {
+            fetch(url)
+                .then(function (r) { return r.blob(); })
+                .then(function (blob) {
+                    restore();
+                    var file = new File([blob], filename, { type: 'application/pdf' });
+                    if (navigator.canShare({ files: [file] })) {
+                        navigator.share({ files: [file], title: filename })
+                            .catch(function (err) { if (err.name !== 'AbortError') fallback(); });
+                    } else {
+                        fallback();
+                    }
+                })
+                .catch(fallback);
+        } else {
+            restore();
+            fallback();
+        }
+    }
+    </script>
+
     {{-- PWA Service Worker --}}
     <script>
         if ('serviceWorker' in navigator) {

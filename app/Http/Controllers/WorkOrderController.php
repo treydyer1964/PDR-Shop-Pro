@@ -112,7 +112,7 @@ class WorkOrderController extends Controller
         )->setPaper('letter', 'portrait');
 
         $filename = 'courtesy-vehicle-agreement-' . $workOrder->ro_number . '.pdf';
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 
     public function blankRentalAgreementPdf(): \Illuminate\Http\Response
@@ -129,6 +129,6 @@ class WorkOrderController extends Controller
             compact('workOrder', 'rental', 'rentalVehicle', 'segment', 'tenant', 'isBlank')
         )->setPaper('letter', 'portrait');
 
-        return $pdf->download('courtesy-vehicle-agreement-blank.pdf');
+        return $pdf->stream('courtesy-vehicle-agreement-blank.pdf');
     }
 }
