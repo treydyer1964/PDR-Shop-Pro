@@ -27,8 +27,10 @@ class EditWorkOrder extends Component
     public string $adjuster_phone        = '';
     public string $adjuster_email        = '';
     public string $deductible            = '';
-    public bool  $insurance_pre_inspected = false;
-    public bool  $has_rental_coverage    = false;
+    public bool   $insurance_pre_inspected    = false;
+    public bool   $has_rental_coverage        = false;
+    public bool   $needs_rental               = false;
+    public string $insurance_daily_coverage   = '';
 
     public function mount(WorkOrder $workOrder): void
     {
@@ -48,8 +50,10 @@ class EditWorkOrder extends Component
         $this->adjuster_phone          = $workOrder->adjuster_phone ?? '';
         $this->adjuster_email          = $workOrder->adjuster_email ?? '';
         $this->deductible              = $workOrder->deductible ?? '';
-        $this->insurance_pre_inspected = (bool) $workOrder->insurance_pre_inspected;
-        $this->has_rental_coverage     = (bool) $workOrder->has_rental_coverage;
+        $this->insurance_pre_inspected  = (bool) $workOrder->insurance_pre_inspected;
+        $this->has_rental_coverage      = (bool) $workOrder->has_rental_coverage;
+        $this->needs_rental             = (bool) $workOrder->needs_rental;
+        $this->insurance_daily_coverage = $workOrder->insurance_daily_coverage ?? '';
     }
 
     #[Computed]
@@ -114,8 +118,10 @@ class EditWorkOrder extends Component
                 'adjuster_phone'          => $this->adjuster_phone ?: null,
                 'adjuster_email'          => $this->adjuster_email ?: null,
                 'deductible'              => $this->deductible !== '' ? $this->deductible : null,
-                'insurance_pre_inspected' => $this->insurance_pre_inspected,
-                'has_rental_coverage'     => $this->has_rental_coverage,
+                'insurance_pre_inspected'  => $this->insurance_pre_inspected,
+                'has_rental_coverage'      => $this->has_rental_coverage,
+                'needs_rental'             => $this->needs_rental,
+                'insurance_daily_coverage' => $this->insurance_daily_coverage !== '' ? (float) $this->insurance_daily_coverage : null,
             ];
         }
 
