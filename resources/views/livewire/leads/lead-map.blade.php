@@ -112,12 +112,12 @@
                 @keydown.enter.prevent="
                     if (!query.trim()) return;
                     searching = true; error = '';
-                    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query))
+                    fetch('/api/forward-geocode?q=' + encodeURIComponent(query))
                         .then(r => r.json())
                         .then(d => {
                             searching = false;
-                            if (d.length) {
-                                window.leadMapFlyTo && window.leadMapFlyTo(parseFloat(d[0].lat), parseFloat(d[0].lon), 18);
+                            if (d.lat) {
+                                window.leadMapFlyTo && window.leadMapFlyTo(d.lat, d.lng, 18);
                             } else {
                                 error = 'Address not found';
                             }

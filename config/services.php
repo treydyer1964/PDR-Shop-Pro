@@ -32,6 +32,10 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
     ],
 
+    'google' => [
+        'geocoding_key' => env('GOOGLE_GEOCODING_KEY'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

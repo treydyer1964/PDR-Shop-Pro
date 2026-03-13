@@ -34,55 +34,58 @@ Route::middleware(['auth'])->group(function () {
     // VIN extraction via OpenAI Vision
     Route::post('/vin/extract', [VehicleController::class, 'extractVin'])->name('vin.extract');
 
-    // Reverse geocode proxy — tries US Census TIGER data first, falls back to Nominatim
+    // Reverse geocode proxy — Google Geocoding API
     Route::get('/api/reverse-geocode', function () {
         $lat = (float) request()->query('lat');
         $lng = (float) request()->query('lng');
+        $key = config('services.google.geocoding_key');
 
-        // US Census Bureau Geocoder — free, no key, uses official TIGER/Line address data
-        // Note: Census API uses x=longitude, y=latitude
         try {
-            $census = \Illuminate\Support\Facades\Http::timeout(6)->get(
-                'https://geocoding.geo.census.gov/geocoder/locations/coordinates',
-                ['x' => $lng, 'y' => $lat, 'benchmark' => 'Public_AR_Current', 'format' => 'json']
+            $res = \Illuminate\Support\Facades\Http::timeout(6)->get(
+                'https://maps.googleapis.com/maps/api/geocode/json',
+                ['latlng' => "{$lat},{$lng}", 'key' => $key]
             );
-            $matches = $census->json('result.addressMatches') ?? [];
-            if (!empty($matches)) {
-                $m    = $matches[0];
-                $comp = $m['addressComponents'] ?? [];
-                // matchedAddress = "123 MAIN ST, ABILENE, TX, 79601"
-                $street = ucwords(strtolower(trim(explode(',', $m['matchedAddress'] ?? '')[0] ?? '')));
+            $results = $res->json('results') ?? [];
+            if (!empty($results)) {
+                $components = $results[0]['address_components'] ?? [];
+                $get = fn($type) => collect($components)->first(fn($c) => in_array($type, $c['types']));
+                $streetNumber = $get('street_number')['long_name'] ?? '';
+                $route        = $get('route')['long_name'] ?? '';
+                $city         = $get('locality')['long_name'] ?? $get('sublocality')['long_name'] ?? '';
+                $state        = $get('administrative_area_level_1')['short_name'] ?? '';
+                $zip          = $get('postal_code')['long_name'] ?? '';
                 return response()->json([
-                    'address' => $street,
-                    'city'    => ucwords(strtolower($comp['city']    ?? '')),
-                    'state'   => strtoupper($comp['state'] ?? ''),
-                    'zip'     => $comp['zip'] ?? '',
-                    'source'  => 'census',
+                    'address' => trim("{$streetNumber} {$route}"),
+                    'city'    => $city,
+                    'state'   => $state,
+                    'zip'     => $zip,
+                    'source'  => 'google',
                 ]);
             }
         } catch (\Exception $e) {}
 
-        // Nominatim fallback
-        try {
-            $nom  = \Illuminate\Support\Facades\Http::timeout(6)
-                ->withHeaders(['User-Agent' => 'PDRShopPro/1.0 (pdrshoppro.com)'])
-                ->get('https://nominatim.openstreetmap.org/reverse', [
-                    'lat' => $lat, 'lon' => $lng, 'format' => 'json', 'zoom' => 18,
-                ]);
-            $addr       = $nom->json('address') ?? [];
-            $stateRaw   = $addr['state_code'] ?? ($addr['ISO3166-2-lvl4'] ?? '');
-            $state      = strtoupper(substr(preg_replace('/^US-/', '', $stateRaw), 0, 2));
-            return response()->json([
-                'address' => trim(($addr['house_number'] ?? '') . ' ' . ($addr['road'] ?? '')),
-                'city'    => $addr['city'] ?? $addr['town'] ?? $addr['village'] ?? '',
-                'state'   => $state,
-                'zip'     => $addr['postcode'] ?? '',
-                'source'  => 'nominatim',
-            ]);
-        } catch (\Exception $e) {}
-
         return response()->json(['error' => 'Could not geocode location'], 422);
     })->name('api.reverse-geocode');
+
+    // Forward geocode proxy — Google Geocoding API (address → lat/lng)
+    Route::get('/api/forward-geocode', function () {
+        $q   = request()->query('q');
+        $key = config('services.google.geocoding_key');
+
+        try {
+            $res = \Illuminate\Support\Facades\Http::timeout(6)->get(
+                'https://maps.googleapis.com/maps/api/geocode/json',
+                ['address' => $q, 'key' => $key]
+            );
+            $results = $res->json('results') ?? [];
+            if (!empty($results)) {
+                $loc = $results[0]['geometry']['location'];
+                return response()->json(['lat' => $loc['lat'], 'lng' => $loc['lng']]);
+            }
+        } catch (\Exception $e) {}
+
+        return response()->json(['error' => 'Address not found'], 422);
+    })->name('api.forward-geocode');
 
     // ── Work Orders ───────────────────────────────────────────────────────────
     // Index and show are accessible to all auth users (field staff scoped in Livewire/controller)
