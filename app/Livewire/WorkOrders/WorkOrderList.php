@@ -58,6 +58,9 @@ class WorkOrderList extends Component
                     WorkOrderStatus::Delivered->value,
                 ])->where('kicked', false)
             )
+            ->when($this->filterView === 'to_be_acquired', fn($q) =>
+                $q->where('status', WorkOrderStatus::ToBeAcquired->value)
+            )
             ->when($this->filterView === 'balance_due', fn($q) =>
                 $q->whereNotNull('invoice_total')
                   ->whereRaw('invoice_total > (SELECT COALESCE(SUM(amount), 0) FROM work_order_payments WHERE work_order_payments.work_order_id = work_orders.id)')
