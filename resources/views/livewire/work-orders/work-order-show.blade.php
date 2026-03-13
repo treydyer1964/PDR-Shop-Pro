@@ -274,6 +274,86 @@
         $chevron = '<svg class="h-4 w-4 text-slate-400 transition-transform duration-200 shrink-0" :class="{\'rotate-180\': open}" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>';
     @endphp
 
+    {{-- ── Vehicle Info ─────────────────────────────────────────────────────── --}}
+    @php $v = $workOrder->vehicle; @endphp
+    <div x-data="{ open: @js($showVehicleEdit) }" class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <button @click="open = !open; if(open) $wire.openVehicleEdit()"
+                class="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-slate-50 transition-colors">
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Vehicle</p>
+                <p class="text-sm font-medium text-slate-800 mt-0.5">
+                    {{ trim("{$v->year} {$v->make} {$v->model}") }}
+                    @if($v->trim) <span class="text-slate-400">{{ $v->trim }}</span>@endif
+                    @if($v->color) · <span class="text-slate-500">{{ $v->color }}</span>@endif
+                </p>
+                @if($v->vin)
+                    <p class="text-xs text-slate-400 font-mono mt-0.5">{{ $v->vin }}</p>
+                @else
+                    <p class="text-xs text-amber-500 font-medium mt-0.5">⚠ No VIN on file</p>
+                @endif
+            </div>
+            {!! $chevron !!}
+        </button>
+
+        <div x-show="open" style="display:none" class="border-t border-slate-100 px-5 py-4">
+            @if($showVehicleEdit)
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">VIN</label>
+                    <input wire:model="vVin" type="text" maxlength="17" placeholder="17-character VIN"
+                           class="w-full rounded-lg border-slate-300 text-sm font-mono shadow-sm focus:border-blue-500 focus:ring-blue-500 uppercase" />
+                    @error('vVin') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Year</label>
+                        <input wire:model="vYear" type="number" min="1900" max="{{ date('Y') + 2 }}" placeholder="2024"
+                               class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        @error('vYear') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Make *</label>
+                        <input wire:model="vMake" type="text" placeholder="Toyota"
+                               class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        @error('vMake') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Model *</label>
+                        <input wire:model="vModel" type="text" placeholder="Camry"
+                               class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        @error('vModel') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Trim</label>
+                        <input wire:model="vTrim" type="text" placeholder="XLE"
+                               class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Color</label>
+                        <input wire:model="vColor" type="text" placeholder="White"
+                               class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Plate</label>
+                        <input wire:model="vPlate" type="text" placeholder="ABC-1234"
+                               class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <button wire:click="saveVehicle"
+                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+                        Save
+                    </button>
+                    <button @click="open = false" type="button"
+                            class="text-sm text-slate-500 hover:text-slate-700">Cancel</button>
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+
     {{-- ── 1. Sub-Tasks (Phases) ─────────────────────────────────────────────── --}}
     @php
         $activeTasks = collect([

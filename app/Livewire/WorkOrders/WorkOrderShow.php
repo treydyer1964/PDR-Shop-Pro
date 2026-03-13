@@ -35,6 +35,16 @@ class WorkOrderShow extends Component
     public bool $showSupplementForm = false;
     public string $supplementNotes  = '';
 
+    // Vehicle edit
+    public bool   $showVehicleEdit = false;
+    public string $vVin   = '';
+    public string $vYear  = '';
+    public string $vMake  = '';
+    public string $vModel = '';
+    public string $vTrim  = '';
+    public string $vColor = '';
+    public string $vPlate = '';
+
     // Sub-task date editing (inline)
     public ?string $editingSubTask = null;
     public string $subTaskDate     = '';
@@ -318,6 +328,47 @@ class WorkOrderShow extends Component
     {
         $this->editingLogId = null;
         $this->editLogDate  = '';
+    }
+
+    // ── Vehicle edit ───────────────────────────────────────────────────────────
+
+    public function openVehicleEdit(): void
+    {
+        $v = $this->workOrder->vehicle;
+        $this->vVin   = $v->vin   ?? '';
+        $this->vYear  = $v->year  ?? '';
+        $this->vMake  = $v->make  ?? '';
+        $this->vModel = $v->model ?? '';
+        $this->vTrim  = $v->trim  ?? '';
+        $this->vColor = $v->color ?? '';
+        $this->vPlate = $v->plate ?? '';
+        $this->showVehicleEdit = true;
+    }
+
+    public function saveVehicle(): void
+    {
+        $this->validate([
+            'vVin'   => 'nullable|string|max:17',
+            'vYear'  => 'nullable|integer|min:1900|max:' . (date('Y') + 2),
+            'vMake'  => 'required|string|max:100',
+            'vModel' => 'required|string|max:100',
+            'vTrim'  => 'nullable|string|max:100',
+            'vColor' => 'nullable|string|max:50',
+            'vPlate' => 'nullable|string|max:20',
+        ]);
+
+        $this->workOrder->vehicle->update([
+            'vin'   => strtoupper($this->vVin)  ?: null,
+            'year'  => $this->vYear  ?: null,
+            'make'  => $this->vMake,
+            'model' => $this->vModel,
+            'trim'  => $this->vTrim  ?: null,
+            'color' => $this->vColor ?: null,
+            'plate' => $this->vPlate ?: null,
+        ]);
+
+        $this->workOrder->refresh();
+        $this->showVehicleEdit = false;
     }
 
     public function render()
