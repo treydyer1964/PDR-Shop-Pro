@@ -57,23 +57,20 @@ class HailAlertSettings extends Component
         $this->geocoding = true;
 
         try {
-            $response = Http::withHeaders(['User-Agent' => 'PDRShopPro/2.0 (contact@pdrshoppro.com)'])
-                ->get('https://nominatim.openstreetmap.org/search', [
-                    'q'              => $this->homeAddress,
-                    'format'         => 'json',
-                    'limit'          => 1,
-                    'addressdetails' => 1,
-                    'countrycodes'   => 'us',
-                ]);
+            $response = Http::timeout(6)->get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'address' => $this->homeAddress,
+                'key'     => config('services.google.geocoding_key'),
+            ]);
 
-            $results = $response->json();
+            $results = $response->json('results') ?? [];
 
             if (empty($results)) {
                 $this->geocodeError = 'Address not found. Try a more specific address.';
             } else {
-                $this->homeLat      = $results[0]['lat'];
-                $this->homeLng      = $results[0]['lon'];
-                $this->homeAddress  = $results[0]['display_name'];
+                $loc               = $results[0]['geometry']['location'];
+                $this->homeLat     = $loc['lat'];
+                $this->homeLng     = $loc['lng'];
+                $this->homeAddress = $results[0]['formatted_address'];
             }
         } catch (\Exception $e) {
             $this->geocodeError = 'Geocoding failed. Check your connection and try again.';
