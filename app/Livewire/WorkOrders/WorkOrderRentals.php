@@ -77,8 +77,10 @@ class WorkOrderRentals extends Component
     {
         return RentalVehicle::forTenant(auth()->user()->tenant_id)
             ->active()
+            ->with(['workOrderRentals.segments'])
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->filter(fn($v) => $v->isAvailable());
     }
 
     #[Computed]
