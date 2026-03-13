@@ -33,7 +33,10 @@ class RentalVehicle extends Model
     public function displayName(): string
     {
         $parts = array_filter([$this->year, $this->make, $this->model]);
-        return $this->name ?: implode(' ', $parts) ?: 'Vehicle #' . $this->id;
+        $base  = $this->name ?: implode(' ', $parts) ?: 'Vehicle #' . $this->id;
+        return $this->plate_number
+            ? $base . ' [' . strtoupper($this->plate_number) . ']'
+            : $base;
     }
 
     /**
