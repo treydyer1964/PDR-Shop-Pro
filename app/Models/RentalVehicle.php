@@ -76,4 +76,26 @@ class RentalVehicle extends Model
     {
         return $query->where('tenant_id', $tenantId);
     }
+
+    /**
+     * Returns true if the vehicle has no open rental segment (no end_date).
+     * Assumes workOrderRentals.segments is eager-loaded.
+     */
+    public function isAvailable(): bool
+    {
+        return $this->workOrderRentals->every(
+            fn($r) => $r->segments->every(fn($s) => $s->end_date !== null)
+        );
+    }
+
+    /**
+     * Returns the active WorkOrderRental (one with an open segment), or null.
+     * Assumes workOrderRentals.segments is eager-loaded.
+     */
+    public function activeRental(): ?WorkOrderRental
+    {
+        return $this->workOrderRentals->first(
+            fn($r) => $r->segments->contains(fn($s) => $s->end_date === null)
+        );
+    }
 }

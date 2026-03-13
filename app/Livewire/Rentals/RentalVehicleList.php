@@ -46,6 +46,7 @@ class RentalVehicleList extends Component
     public function vehicles()
     {
         return RentalVehicle::forTenant(auth()->user()->tenant_id)
+            ->with(['workOrderRentals.segments', 'workOrderRentals.workOrder.customer'])
             ->orderBy('active', 'desc')
             ->orderBy('name')
             ->get();

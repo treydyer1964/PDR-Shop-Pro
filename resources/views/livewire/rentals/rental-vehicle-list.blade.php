@@ -209,12 +209,36 @@
     @else
         <div class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white shadow-sm">
             @foreach($this->vehicles as $v)
-                @php $svcStatus = $v->serviceStatus(); @endphp
+                @php
+                    $svcStatus    = $v->serviceStatus();
+                    $available    = $v->isAvailable();
+                    $activeRental = $available ? null : $v->activeRental();
+                @endphp
                 <div @class(['px-5 py-4', 'opacity-60' => ! $v->active])>
                     <div class="flex items-center gap-4">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <span class="font-medium text-slate-800">{{ $v->displayName() }}</span>
+                                {{-- Availability badge --}}
+                                @if($v->active)
+                                    @if($available)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+                                            <svg class="h-2 w-2 fill-green-500" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3"/></svg>
+                                            Available
+                                        </span>
+                                    @else
+                                        @php
+                                            $wo       = $activeRental?->workOrder;
+                                            $customer = $wo?->customer;
+                                            $label    = $customer ? $customer->full_name : ($wo ? 'WO #' . $wo->ro_number : 'Out');
+                                        @endphp
+                                        <a href="{{ $wo ? route('work-orders.show', $wo) : '#' }}"
+                                           class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 hover:bg-red-200 transition-colors">
+                                            <svg class="h-2 w-2 fill-red-500" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3"/></svg>
+                                            Out — {{ $label }}
+                                        </a>
+                                    @endif
+                                @endif
                                 @if(! $v->active)
                                     <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Inactive</span>
                                 @endif
