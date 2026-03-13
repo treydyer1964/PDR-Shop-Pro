@@ -280,14 +280,33 @@ class WorkOrderRentals extends Component
 
     // ── Reimbursement ──────────────────────────────────────────────────────────
 
-    public function openReimburseForm(int $rentalId): void
+    /** Step 1: Mark claim as submitted to insurance (no payment yet) */
+    public function markSubmitted(int $rentalId): void
     {
-        $this->reimburseRentalId      = $rentalId;
-        $this->insuranceAmountReceived = '';
-        $this->reimburseNotes         = '';
-        $this->showReimburseForm      = true;
+        $rental = WorkOrderRental::with('reimbursement')->findOrFail($rentalId);
+
+        if (! $rental->reimbursement) {
+            RentalReimbursement::create([
+                'tenant_id'            => $this->workOrder->tenant_id,
+                'work_order_id'        => $this->workOrder->id,
+                'work_order_rental_id' => $rental->id,
+                'submitted_at'         => now(),
+                'submitted_by'         => auth()->id(),
+            ]);
+        }
+
+        unset($this->rental);
     }
 
+    public function openReimburseForm(int $rentalId): void
+    {
+        $this->reimburseRentalId       = $rentalId;
+        $this->insuranceAmountReceived = '';
+        $this->reimburseNotes          = '';
+        $this->showReimburseForm       = true;
+    }
+
+    /** Step 2: Record payment received from insurance */
     public function recordReimbursement(): void
     {
         $this->validate([
@@ -304,22 +323,25 @@ class WorkOrderRentals extends Component
         if ($rental->reimbursement) {
             $rental->reimbursement->update([
                 'insurance_amount_received' => (float) $this->insuranceAmountReceived,
-                'notes'                    => $this->reimburseNotes ?: null,
-                'recorded_by'              => auth()->id(),
+                'notes'                     => $this->reimburseNotes ?: null,
+                'recorded_by'               => auth()->id(),
             ]);
         } else {
+            // Created directly at payment (skipped submit step)
             RentalReimbursement::create([
                 'tenant_id'                => $this->workOrder->tenant_id,
                 'work_order_id'            => $this->workOrder->id,
                 'work_order_rental_id'     => $rental->id,
+                'submitted_at'             => now(),
+                'submitted_by'             => auth()->id(),
                 'insurance_amount_received' => (float) $this->insuranceAmountReceived,
                 'notes'                    => $this->reimburseNotes ?: null,
                 'recorded_by'              => auth()->id(),
             ]);
         }
 
-        $this->showReimburseForm  = false;
-        $this->reimburseRentalId  = null;
+        $this->showReimburseForm = false;
+        $this->reimburseRentalId = null;
         $this->reset(['insuranceAmountReceived', 'reimburseNotes']);
 
         unset($this->rental);

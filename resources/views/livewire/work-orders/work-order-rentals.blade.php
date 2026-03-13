@@ -365,13 +365,73 @@
             <div class="border-t border-slate-100">
                 <div class="flex items-center justify-between px-5 py-2.5">
                     <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Insurance Reimbursement</h4>
-                    @if(! $rental->reimbursement && ! $showReimburseForm)
-                        <button wire:click="openReimburseForm({{ $rental->id }})"
-                                class="text-xs font-medium text-green-600 hover:text-green-700">+ Record Payment</button>
+                    @if($billable !== null)
+                        <span class="text-xs text-slate-500">Billable: <span class="font-semibold text-slate-700">${{ number_format($billable, 2) }}</span></span>
                     @endif
                 </div>
 
-                @if($rental->reimbursement)
+                {{-- STATE 1: Not yet submitted --}}
+                @if(! $rental->reimbursement && ! $showReimburseForm)
+                    <div class="px-5 pb-4 space-y-3">
+                        <p class="text-xs text-slate-400">Claim has not been submitted to insurance yet.</p>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button wire:click="markSubmitted({{ $rental->id }})"
+                                    wire:confirm="Mark rental claim as submitted to insurance?"
+                                    class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                                </svg>
+                                Submit to Insurance
+                            </button>
+                            <button onclick="openPdf('{{ route('work-orders.rental-invoice-pdf', $workOrder) }}', 'rental-invoice-{{ $workOrder->ro_number }}.pdf', this)"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                                Print Rental Invoice
+                            </button>
+                            <button wire:click="openReimburseForm({{ $rental->id }})"
+                                    class="text-xs text-slate-400 hover:text-slate-600">Skip to Record Payment</button>
+                        </div>
+                    </div>
+
+                {{-- STATE 2: Submitted, awaiting payment --}}
+                @elseif($rental->reimbursement && ! $rental->reimbursement->isPaid() && ! $showReimburseForm)
+                    <div class="px-5 pb-4 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                </svg>
+                                Submitted {{ $rental->reimbursement->submitted_at->format('M j, Y') }} — Awaiting Payment
+                            </span>
+                        </div>
+                        @if($rental->reimbursement->notes)
+                            <p class="text-xs text-slate-500">{{ $rental->reimbursement->notes }}</p>
+                        @endif
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button wire:click="openReimburseForm({{ $rental->id }})"
+                                    class="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+                                </svg>
+                                Record Payment Received
+                            </button>
+                            <button onclick="openPdf('{{ route('work-orders.rental-invoice-pdf', $workOrder) }}', 'rental-invoice-{{ $workOrder->ro_number }}.pdf', this)"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                                Print Rental Invoice
+                            </button>
+                            <button wire:click="deleteReimbursement({{ $rental->reimbursement->id }})"
+                                    wire:confirm="Undo submission and reset to unbilled?"
+                                    class="text-xs text-red-400 hover:text-red-600">Undo Submission</button>
+                        </div>
+                    </div>
+
+                {{-- STATE 3: Paid --}}
+                @elseif($rental->reimbursement && $rental->reimbursement->isPaid() && ! $showReimburseForm)
                     <div class="px-5 pb-4 space-y-2">
                         <div class="flex items-center gap-6 text-sm">
                             <div>
@@ -383,6 +443,15 @@
                                     <span class="text-xs text-slate-500">Billed</span><br>
                                     <span class="font-medium text-slate-700">${{ number_format($billable, 2) }}</span>
                                 </div>
+                                @php $diff = $rental->reimbursement->insurance_amount_received - $billable; @endphp
+                                @if(abs($diff) > 0.01)
+                                    <div>
+                                        <span class="text-xs text-slate-500">{{ $diff >= 0 ? 'Overpaid' : 'Short' }}</span><br>
+                                        <span class="font-medium {{ $diff >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                                            ${{ number_format(abs($diff), 2) }}
+                                        </span>
+                                    </div>
+                                @endif
                             @endif
                         </div>
 
@@ -395,10 +464,10 @@
                             <div class="mt-2 rounded-lg border border-green-100 bg-green-50 p-3">
                                 <p class="mb-2 text-xs font-semibold text-green-800">Staff Reimbursement Breakdown</p>
                                 @foreach($this->reimbursementBreakdown as $userId => $amount)
-                                    @php $user = \App\Models\User::find($userId); @endphp
-                                    @if($user && $amount > 0)
+                                    @php $staffUser = \App\Models\User::find($userId); @endphp
+                                    @if($staffUser && $amount > 0)
                                         <div class="flex justify-between text-xs text-green-700 py-0.5">
-                                            <span>{{ $user->name }}</span>
+                                            <span>{{ $staffUser->name }}</span>
                                             <span class="font-semibold">${{ number_format($amount, 2) }}</span>
                                         </div>
                                     @endif
@@ -408,29 +477,27 @@
 
                         <div class="flex items-center gap-3 pt-1">
                             <button wire:click="openReimburseForm({{ $rental->id }})"
-                                    class="text-xs text-blue-600 hover:text-blue-700">Edit</button>
+                                    class="text-xs text-blue-600 hover:text-blue-700">Edit Amount</button>
                             <button wire:click="deleteReimbursement({{ $rental->reimbursement->id }})"
                                     wire:confirm="Remove this reimbursement record?"
                                     class="text-xs text-red-400 hover:text-red-600">Remove</button>
                         </div>
                     </div>
-
-                @elseif(! $showReimburseForm)
-                    <p class="px-5 pb-4 text-xs text-slate-400">No reimbursement received yet.</p>
                 @endif
 
-                {{-- Reimbursement form --}}
+                {{-- Payment form (States 1 skip-to-pay or State 2 record payment) --}}
                 @if($showReimburseForm)
                     <div class="border-t border-slate-100 bg-green-50/40 px-5 py-4 space-y-3">
+                        <p class="text-xs font-semibold text-slate-600">Record Payment from Insurance</p>
                         <div class="max-w-xs">
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Amount Received from Insurance ($)</label>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Amount Received ($)</label>
                             <input wire:model="insuranceAmountReceived" type="number" step="0.01" min="0" placeholder="0.00"
                                    class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                             @error('insuranceAmountReceived') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Notes</label>
-                            <input wire:model="reimburseNotes" type="text" placeholder="Optional…"
+                            <input wire:model="reimburseNotes" type="text" placeholder="Check #, date, etc."
                                    class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                         </div>
                         <div class="flex gap-2">
