@@ -30,8 +30,6 @@ class WorkOrderList extends Component
     #[Url(as: 'view')]
     public string $filterView = 'in_shop';
 
-    public bool $showKicked = false;
-
     public function updatedSearch(): void        { $this->resetPage(); }
     public function updatedFilterStatus(): void  { $this->resetPage(); }
     public function updatedFilterType(): void    { $this->resetPage(); }
@@ -50,7 +48,7 @@ class WorkOrderList extends Component
             ->when(! $user->canSeeAllWorkOrders(), fn($q) =>
                 $q->whereHas('assignments', fn($a) => $a->where('user_id', $user->id))
             )
-            ->when(! $this->showKicked, fn($q) => $q->where('kicked', false))
+            ->where('kicked', false)
             // Smart view filters
             ->when($this->filterView === 'in_shop', fn($q) =>
                 $q->whereNotIn('status', [

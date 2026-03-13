@@ -1,8 +1,8 @@
 <div class="space-y-4">
     {{-- Filters bar --}}
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="space-y-2">
         {{-- Search --}}
-        <div class="relative flex-1 max-w-md">
+        <div class="relative">
             <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803 7.5 7.5 0 0015.803 15.803z" />
             </svg>
@@ -11,10 +11,10 @@
                    class="w-full rounded-lg border-slate-300 py-2 pl-9 pr-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
         </div>
 
-        {{-- View filter --}}
-        <div class="flex items-center gap-2 flex-wrap">
+        {{-- Filter selects: 2-per-row on mobile, single row on desktop --}}
+        <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
             <select wire:model.live="filterView"
-                    class="rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 font-medium">
+                    class="w-full sm:w-auto rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 font-medium">
                 <option value="in_shop">In Shop</option>
                 <option value="to_be_acquired">To Be Acquired</option>
                 <option value="balance_due">Balance Due</option>
@@ -23,12 +23,9 @@
                 <option value="unpaid_rental">Unpaid Rental</option>
                 <option value="">All</option>
             </select>
-        </div>
 
-        {{-- Status filter --}}
-        <div class="flex items-center gap-2 flex-wrap">
             <select wire:model.live="filterStatus"
-                    class="rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    class="w-full sm:w-auto rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 <option value="">All Statuses</option>
                 @foreach($this->statuses as $status)
                     <option value="{{ $status->value }}">{{ $status->label() }}</option>
@@ -36,7 +33,7 @@
             </select>
 
             <select wire:model.live="filterType"
-                    class="rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    class="w-full sm:w-auto rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 <option value="">All Types</option>
                 @foreach($this->jobTypes as $type)
                     <option value="{{ $type->value }}">{{ $type->label() }}</option>
@@ -45,18 +42,13 @@
 
             @if($this->stormEvents->isNotEmpty())
                 <select wire:model.live="filterStorm"
-                        class="rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="w-full sm:w-auto rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     <option value="">All Storms</option>
                     @foreach($this->stormEvents as $storm)
                         <option value="{{ $storm->id }}">{{ $storm->name }}</option>
                     @endforeach
                 </select>
             @endif
-
-            <label class="flex items-center gap-1.5 text-sm text-slate-500 cursor-pointer">
-                <input wire:model.live="showKicked" type="checkbox" class="rounded border-slate-300 text-blue-600" />
-                Show Kicked
-            </label>
         </div>
     </div>
 
