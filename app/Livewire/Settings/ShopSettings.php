@@ -23,6 +23,9 @@ class ShopSettings extends Component
     public string $zip           = '';
     public string $remitAddress  = '';
 
+    // Rental invoice note
+    public string $rentalInvoiceNote = '';
+
     // Commission defaults
     public string $advisorPerCarBonus = '';
 
@@ -46,7 +49,9 @@ class ShopSettings extends Component
         $this->city              = $tenant->city ?? '';
         $this->state             = $tenant->state ?? '';
         $this->zip               = $tenant->zip ?? '';
-        $this->remitAddress      = $tenant->remit_address ?? '';
+        $this->remitAddress        = $tenant->remit_address ?? '';
+        $this->rentalInvoiceNote   = $tenant->rental_invoice_note
+            ?? "This rental was paid for by {$tenant->name} for the repair of {vehicle}. Please remit reimbursement to " . ($tenant->remit_address ?? $tenant->address ?? '') . '.';
         $this->advisorPerCarBonus = $tenant->advisor_per_car_bonus !== null
             ? number_format((float) $tenant->advisor_per_car_bonus, 2, '.', '')
             : '100.00';
@@ -90,8 +95,9 @@ class ShopSettings extends Component
             'city'              => 'nullable|string|max:100',
             'state'             => 'nullable|string|max:50',
             'zip'               => 'nullable|string|max:20',
-            'remitAddress'      => 'nullable|string|max:500',
-            'advisorPerCarBonus'=> 'nullable|numeric|min:0',
+            'remitAddress'        => 'nullable|string|max:500',
+            'rentalInvoiceNote'   => 'nullable|string|max:2000',
+            'advisorPerCarBonus'  => 'nullable|numeric|min:0',
             'defaultRiTechId'   => 'nullable|integer',
             'defaultPorterId'   => 'nullable|integer',
             'logo'              => 'nullable|image|max:4096',
@@ -107,6 +113,7 @@ class ShopSettings extends Component
             'state'                 => $this->state ?: null,
             'zip'                   => $this->zip ?: null,
             'remit_address'         => $this->remitAddress ?: null,
+            'rental_invoice_note'   => $this->rentalInvoiceNote ?: null,
             'advisor_per_car_bonus' => $this->advisorPerCarBonus !== '' ? (float) $this->advisorPerCarBonus : null,
             'default_ri_tech_id'    => $this->defaultRiTechId ?: null,
             'default_porter_id'     => $this->defaultPorterId ?: null,

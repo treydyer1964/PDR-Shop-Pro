@@ -374,15 +374,20 @@
                 @if(! $rental->reimbursement && ! $showReimburseForm)
                     <div class="px-5 pb-4 space-y-3">
                         <p class="text-xs text-slate-400">Claim has not been submitted to insurance yet.</p>
-                        <div class="flex items-center gap-2 flex-wrap">
+                        @if($rental->segments->isEmpty())
+                        <p class="text-xs text-amber-600 font-medium">⚠ Add at least one rental period before generating an invoice.</p>
+                    @endif
+                    <div class="flex items-center gap-2 flex-wrap">
                             <button wire:click="markSubmitted({{ $rental->id }})"
                                     wire:confirm="Mark rental claim as submitted to insurance?"
-                                    class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
+                                    @if($rental->segments->isEmpty()) disabled @endif
+                                    class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
                                 </svg>
                                 Submit to Insurance
                             </button>
+                            @if(! $rental->segments->isEmpty())
                             <button onclick="openPdf('{{ route('work-orders.rental-invoice-pdf', $workOrder) }}', 'rental-invoice-{{ $workOrder->ro_number }}.pdf', this)"
                                     class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -390,6 +395,7 @@
                                 </svg>
                                 Print Rental Invoice
                             </button>
+                            @endif
                             <button wire:click="openReimburseForm({{ $rental->id }})"
                                     class="text-xs text-slate-400 hover:text-slate-600">Skip to Record Payment</button>
                         </div>
@@ -417,6 +423,7 @@
                                 </svg>
                                 Record Payment Received
                             </button>
+                            @if(! $rental->segments->isEmpty())
                             <button onclick="openPdf('{{ route('work-orders.rental-invoice-pdf', $workOrder) }}', 'rental-invoice-{{ $workOrder->ro_number }}.pdf', this)"
                                     class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -424,6 +431,7 @@
                                 </svg>
                                 Print Rental Invoice
                             </button>
+                            @endif
                             <button wire:click="deleteReimbursement({{ $rental->reimbursement->id }})"
                                     wire:confirm="Undo submission and reset to unbilled?"
                                     class="text-xs text-red-400 hover:text-red-600">Undo Submission</button>

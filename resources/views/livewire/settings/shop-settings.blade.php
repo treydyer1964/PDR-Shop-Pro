@@ -76,6 +76,25 @@
         </div>
     </div>
 
+    {{-- Rental Invoice Note --}}
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-100 px-5 py-3">
+            <h3 class="text-sm font-semibold text-slate-700">Rental Reimbursement Note</h3>
+        </div>
+        <div class="p-5">
+            <label class="block text-sm font-medium text-slate-700 mb-1">
+                Note printed on rental invoices sent to insurance
+            </label>
+            <textarea wire:model="rentalInvoiceNote" rows="4"
+                      placeholder="e.g. This rental was paid for by Acme Shop for the repair of {vehicle}. Please remit to P.O. Box 123..."
+                      class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+            <p class="mt-1 text-xs text-slate-400">
+                Use <code class="bg-slate-100 px-1 rounded">{vehicle}</code> to automatically insert the customer's vehicle (Year Make Model).
+            </p>
+            @error('rentalInvoiceNote') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+        </div>
+    </div>
+
     {{-- Logo --}}
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-100 px-5 py-3">

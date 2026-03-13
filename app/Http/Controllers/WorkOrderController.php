@@ -77,9 +77,24 @@ class WorkOrderController extends Controller
         $rental = WorkOrderRental::where('work_order_id', $workOrder->id)
             ->with(['vehicle', 'segments'])
             ->firstOrFail();
+
+        abort_if(
+            $rental->segments->isEmpty(),
+            422,
+            'Cannot generate rental invoice — no rental periods have been recorded yet.'
+        );
+
         $workOrder->load(['customer', 'vehicle', 'insuranceCompany', 'tenant']);
         $tenant = $workOrder->tenant;
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('work-orders.rental-invoice-pdf', compact('workOrder', 'rental', 'tenant'))
+
+        // Resolve the invoice note, substituting {vehicle} merge tag
+        $vehicle = $workOrder->vehicle;
+        $vehicleDesc = $vehicle ? trim("{$vehicle->year} {$vehicle->make} {$vehicle->model}") : 'the vehicle';
+        $rentalNote = $tenant->rental_invoice_note
+            ? str_replace('{vehicle}', $vehicleDesc, $tenant->rental_invoice_note)
+            : null;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('work-orders.rental-invoice-pdf', compact('workOrder', 'rental', 'tenant', 'rentalNote'))
             ->setPaper('letter', 'portrait');
         $filename = 'rental-invoice-' . $workOrder->ro_number . '.pdf';
         return $pdf->download($filename);

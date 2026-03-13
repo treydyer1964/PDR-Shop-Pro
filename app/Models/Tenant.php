@@ -12,7 +12,7 @@ class Tenant extends Model
     protected $fillable = [
         'name', 'slug', 'phone', 'email',
         'address', 'city', 'state', 'zip',
-        'logo_path', 'remit_address',
+        'logo_path', 'remit_address', 'rental_invoice_note',
         'rental_daily_rate', 'advisor_per_car_bonus',
         'default_ri_tech_id', 'default_porter_id',
         'lead_status_labels',
