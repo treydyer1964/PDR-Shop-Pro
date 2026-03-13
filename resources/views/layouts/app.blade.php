@@ -226,6 +226,41 @@
             fallback();
         }
     }
+
+    // Rental invoice opener — opens PDF + pre-filled mailto with claim # subject
+    function openRentalInvoice(url, filename, claimNumber, adjusterEmail, btn) {
+        var subject = claimNumber ? 'Claim: ' + claimNumber : 'Rental Reimbursement';
+        var mailto  = 'mailto:' + (adjusterEmail || '')
+                    + '?subject=' + encodeURIComponent(subject)
+                    + '&body=' + encodeURIComponent('Please see the attached rental invoice.');
+
+        var origHtml = btn ? btn.innerHTML : null;
+        function restore() { if (btn) { btn.disabled = false; btn.innerHTML = origHtml; } }
+
+        if (btn) { btn.disabled = true; btn.innerHTML = 'Loading&hellip;'; }
+
+        if (navigator.canShare) {
+            // iOS PWA: share sheet lets user pick Mail and the PDF comes along
+            fetch(url)
+                .then(function (r) { return r.blob(); })
+                .then(function (blob) {
+                    restore();
+                    var file = new File([blob], filename, { type: 'application/pdf' });
+                    if (navigator.canShare({ files: [file] })) {
+                        navigator.share({ files: [file], title: subject })
+                            .catch(function (err) { if (err.name !== 'AbortError') window.open(url, '_blank'); });
+                    } else {
+                        window.open(url, '_blank');
+                    }
+                })
+                .catch(function () { restore(); window.open(url, '_blank'); });
+        } else {
+            // Desktop: open PDF in new tab, then open pre-filled mailto
+            restore();
+            window.open(url, '_blank');
+            setTimeout(function () { window.location.href = mailto; }, 500);
+        }
+    }
     </script>
 
     {{-- PWA Service Worker --}}
