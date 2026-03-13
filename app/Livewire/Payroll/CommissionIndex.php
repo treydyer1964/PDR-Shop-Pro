@@ -9,9 +9,13 @@ use Livewire\Component;
 
 class CommissionIndex extends Component
 {
-    public string $filterStatus  = 'unpaid'; // unpaid | paid | all
-    public string $filterStaff   = '';
-    public bool   $isFieldStaff  = false;
+    public string $filterStatus   = 'unpaid'; // unpaid | paid | all
+    public string $filterStaff    = '';
+    public bool   $isFieldStaff   = false;
+    public bool   $isSalesManager = false;
+
+    // Roles a Sales Manager is allowed to see commissions for
+    private const SM_VISIBLE_ROLES = ['sales_manager', 'sales_advisor'];
 
     public function mount(): void
     {
@@ -19,6 +23,8 @@ class CommissionIndex extends Component
         if ($user->isFieldStaff()) {
             $this->isFieldStaff = true;
             $this->filterStaff  = (string) $user->id;
+        } elseif ($user->isManager()) {
+            $this->isSalesManager = true;
         }
     }
 
@@ -33,16 +39,22 @@ class CommissionIndex extends Component
     #[Computed]
     public function staff()
     {
-        return User::where('tenant_id', auth()->user()->tenant_id)
+        $query = User::where('tenant_id', auth()->user()->tenant_id)
             ->where('active', true)
-            ->orderBy('name')
-            ->get();
+            ->orderBy('name');
+
+        if ($this->isSalesManager) {
+            $query->whereHas('roles', fn($q) => $q->whereIn('name', self::SM_VISIBLE_ROLES));
+        }
+
+        return $query->get();
     }
 
     #[Computed]
     public function commissions()
     {
-        $tenantId = auth()->user()->tenant_id;
+        $user     = auth()->user();
+        $tenantId = $user->tenant_id;
 
         $query = WorkOrderCommission::with(['user', 'workOrder.vehicle', 'workOrder.customer'])
             ->where('tenant_id', $tenantId)
@@ -52,6 +64,17 @@ class CommissionIndex extends Component
             $query->where('is_paid', false);
         } elseif ($this->filterStatus === 'paid') {
             $query->where('is_paid', true);
+        }
+
+        // Sales Manager: scope to SM + Advisor commissions only
+        if ($this->isSalesManager && $this->filterStaff === '') {
+            $query->whereIn('user_id', function ($sub) use ($tenantId) {
+                $sub->select('users.id')
+                    ->from('users')
+                    ->join('role_user', 'role_user.user_id', '=', 'users.id')
+                    ->where('users.tenant_id', $tenantId)
+                    ->whereIn('role_user.role_name', self::SM_VISIBLE_ROLES);
+            });
         }
 
         if ($this->filterStaff !== '') {

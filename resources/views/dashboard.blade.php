@@ -52,7 +52,10 @@
     </div>
 
     {{-- Quick links --}}
-    <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 {{ $isFieldStaff ? '' : 'lg:grid-cols-6' }}">
+    @php $user = auth()->user(); @endphp
+    <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+
+        {{-- 1. Work Orders — everyone --}}
         <a href="{{ route('work-orders.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
             <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -60,6 +63,8 @@
             </svg>
             <span class="text-xs font-medium text-slate-600">Work Orders</span>
         </a>
+
+        {{-- 2. Commissions — everyone (scoped per role in CommissionIndex) --}}
         <a href="{{ route('commissions.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
             <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -67,14 +72,9 @@
             </svg>
             <span class="text-xs font-medium text-slate-600">Commissions</span>
         </a>
+
+        {{-- 3. Rentals — non-field-staff only --}}
         @if(!$isFieldStaff)
-        <a href="{{ route('payroll.index') }}" wire:navigate
-           class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
-            <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12" />
-            </svg>
-            <span class="text-xs font-medium text-slate-600">Payroll</span>
-        </a>
         <a href="{{ route('rentals.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
             <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -94,6 +94,8 @@
         </a>
         @endif
         @endif
+
+        {{-- 4. Appointments — everyone --}}
         <a href="{{ route('appointments.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
             <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -101,7 +103,20 @@
             </svg>
             <span class="text-xs font-medium text-slate-600">Appointments</span>
         </a>
-        @if(auth()->user()->canAccessAnalytics())
+
+        {{-- 5. Map (Pins) — hidden from PDR tech, R&I tech, porter --}}
+        @if(!$user->isPdrTech() && !$user->isRiTech() && !$user->isPorter())
+        <a href="{{ route('leads.map') }}" wire:navigate
+           class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
+            <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+            </svg>
+            <span class="text-xs font-medium text-slate-600">Map</span>
+        </a>
+        @endif
+
+        {{-- 6. Analytics — Owner, Bookkeeper, Sales Manager --}}
+        @if($user->canAccessAnalytics())
         <a href="{{ route('analytics.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-blue-50 p-4 shadow-sm ring-1 ring-blue-200 hover:ring-blue-400 transition-all text-center">
             <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -110,6 +125,7 @@
             <span class="text-xs font-medium text-blue-600">Analytics</span>
         </a>
         @endif
+
     </div>
 
     {{-- Welcome bar --}}
