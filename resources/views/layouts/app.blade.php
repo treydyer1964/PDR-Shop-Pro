@@ -200,6 +200,9 @@
 
     {{-- Mobile-safe PDF opener: uses Web Share API on iOS PWA, falls back to window.open() --}}
     <script>
+    // iOS detection — share sheet only makes sense on iOS PWA
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
     function openPdf(url, filename, btn) {
         var origHtml = btn ? btn.innerHTML : null;
         function restore() { if (btn) { btn.disabled = false; btn.innerHTML = origHtml; } }
@@ -207,7 +210,7 @@
 
         if (btn) { btn.disabled = true; btn.innerHTML = 'Loading&hellip;'; }
 
-        if (navigator.canShare) {
+        if (isIOS && navigator.canShare) {
             fetch(url)
                 .then(function (r) { return r.blob(); })
                 .then(function (blob) {
@@ -239,7 +242,7 @@
 
         if (btn) { btn.disabled = true; btn.innerHTML = 'Loading&hellip;'; }
 
-        if (navigator.canShare) {
+        if (isIOS && navigator.canShare) {
             // iOS PWA: share sheet lets user pick Mail and the PDF comes along
             fetch(url)
                 .then(function (r) { return r.blob(); })
