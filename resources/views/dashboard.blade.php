@@ -104,7 +104,16 @@
             <span class="text-xs font-medium text-slate-600">Appointments</span>
         </a>
 
-        {{-- 5. Map (Pins) — hidden from PDR tech, R&I tech, porter --}}
+        {{-- 5. Calendar — everyone --}}
+        <a href="{{ route('calendar') }}" wire:navigate
+           class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
+            <svg class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
+            </svg>
+            <span class="text-xs font-medium text-slate-600">Calendar</span>
+        </a>
+
+        {{-- 7. Map (Pins) — hidden from PDR tech, R&I tech, porter --}}
         @if(!$user->isPdrTech() && !$user->isRiTech() && !$user->isPorter())
         <a href="{{ route('leads.map') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-blue-300 transition-all text-center">
@@ -115,7 +124,7 @@
         </a>
         @endif
 
-        {{-- 6. Payroll — Owner, Bookkeeper only --}}
+        {{-- 8. Payroll — Owner, Bookkeeper only --}}
         @if($user->canAccessPayroll())
         <a href="{{ route('payroll.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-green-50 p-4 shadow-sm ring-1 ring-green-200 hover:ring-green-400 transition-all text-center">
@@ -126,7 +135,7 @@
         </a>
         @endif
 
-        {{-- 7. Analytics — Owner, Bookkeeper, Sales Manager --}}
+        {{-- 9. Analytics — Owner, Bookkeeper, Sales Manager --}}
         @if($user->canAccessAnalytics())
         <a href="{{ route('analytics.index') }}" wire:navigate
            class="flex flex-col items-center gap-2 rounded-xl bg-blue-50 p-4 shadow-sm ring-1 ring-blue-200 hover:ring-blue-400 transition-all text-center">

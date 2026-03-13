@@ -27,12 +27,16 @@ class WorkOrderList extends Component
     #[Url(as: 'storm')]
     public string $filterStorm = '';
 
+    #[Url(as: 'view')]
+    public string $filterView = 'in_shop';
+
     public bool $showKicked = false;
 
     public function updatedSearch(): void        { $this->resetPage(); }
     public function updatedFilterStatus(): void  { $this->resetPage(); }
     public function updatedFilterType(): void    { $this->resetPage(); }
     public function updatedFilterStorm(): void   { $this->resetPage(); }
+    public function updatedFilterView(): void    { $this->resetPage(); }
 
     #[Computed]
     public function workOrders()
@@ -47,6 +51,34 @@ class WorkOrderList extends Component
                 $q->whereHas('assignments', fn($a) => $a->where('user_id', $user->id))
             )
             ->when(! $this->showKicked, fn($q) => $q->where('kicked', false))
+            // Smart view filters
+            ->when($this->filterView === 'in_shop', fn($q) =>
+                $q->whereNotIn('status', [
+                    WorkOrderStatus::ToBeAcquired->value,
+                    WorkOrderStatus::Delivered->value,
+                ])->where('kicked', false)
+            )
+            ->when($this->filterView === 'balance_due', fn($q) =>
+                $q->whereNotNull('invoice_total')
+                  ->whereRaw('invoice_total > (SELECT COALESCE(SUM(amount), 0) FROM work_order_payments WHERE work_order_payments.work_order_id = work_orders.id)')
+            )
+            ->when($this->filterView === 'unpaid_commissions', fn($q) =>
+                $q->whereHas('commissions', fn($c) => $c->where('is_paid', false))
+            )
+            ->when($this->filterView === 'unbilled_rentals', fn($q) =>
+                $q->where('status', WorkOrderStatus::Delivered->value)
+                  ->where('has_rental_coverage', true)
+                  ->whereHas('workOrderRental', fn($r) => $r->whereDoesntHave('reimbursement'))
+            )
+            ->when($this->filterView === 'unpaid_rental', fn($q) =>
+                $q->whereHas('workOrderRental.reimbursement', fn($r) =>
+                    $r->where(fn($inner) =>
+                        $inner->whereNull('insurance_amount_received')
+                              ->orWhere('insurance_amount_received', 0)
+                    )
+                )
+            )
+            // Standard filters (stack on top of view filter)
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterType,   fn($q) => $q->where('job_type', $this->filterType))
             ->when($this->filterStorm,  fn($q) => $q->where('storm_event_id', $this->filterStorm))

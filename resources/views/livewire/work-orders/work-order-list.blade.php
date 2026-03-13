@@ -11,6 +11,19 @@
                    class="w-full rounded-lg border-slate-300 py-2 pl-9 pr-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" />
         </div>
 
+        {{-- View filter --}}
+        <div class="flex items-center gap-2 flex-wrap">
+            <select wire:model.live="filterView"
+                    class="rounded-lg border-slate-300 py-2 pl-3 pr-8 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 font-medium">
+                <option value="in_shop">In Shop</option>
+                <option value="balance_due">Balance Due</option>
+                <option value="unpaid_commissions">Unpaid Commissions</option>
+                <option value="unbilled_rentals">Unbilled Rentals</option>
+                <option value="unpaid_rental">Unpaid Rental</option>
+                <option value="">All</option>
+            </select>
+        </div>
+
         {{-- Status filter --}}
         <div class="flex items-center gap-2 flex-wrap">
             <select wire:model.live="filterStatus"
